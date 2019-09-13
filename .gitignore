@@ -1,0 +1,18 @@
+# Jetbrains
+.idea/*
+.idea/**/*
+
+# Gradle
+.gradle
+/build/
+lib/
+out/
+
+# Elastic Beanstalk Files
+.elasticbeanstalk/*
+!.elasticbeanstalk/*.cfg.yml
+!.elasticbeanstalk/config.yml
+!.elasticbeanstalk/*.global.yml
+
+# Local environment
+.env.local

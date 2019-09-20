@@ -7,3 +7,10 @@
 /build/
 lib/
 out/
+
+node_modules
+elm-stuff
+dist
+.cache
+
+frontend/src/elm/Api/*

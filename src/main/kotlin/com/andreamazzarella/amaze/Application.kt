@@ -1,4 +1,4 @@
-package com.mrdigitalpartners.oprah
+package com.andreamazzarella.amaze
 
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.runApplication

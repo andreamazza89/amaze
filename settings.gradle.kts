@@ -4,4 +4,4 @@ pluginManagement {
     }
 }
 
-rootProject.name = "oprah"
+rootProject.name = "a-maze"

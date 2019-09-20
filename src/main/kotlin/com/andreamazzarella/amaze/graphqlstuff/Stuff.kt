@@ -1,4 +1,4 @@
-package com.mrdigitalpartners.oprah.graphqlstuff
+package com.andreamazzarella.amaze.graphqlstuff
 
 import com.coxautodev.graphql.tools.GraphQLQueryResolver
 import org.springframework.stereotype.Component

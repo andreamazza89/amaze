@@ -30,6 +30,7 @@ dependencies {
     implementation("com.amazonaws:aws-java-sdk-s3:1.11.319")
     runtimeOnly("com.h2database:h2:1.4.197") // Fixed version as a workaround for https://github.com/h2database/h2database/issues/1841
     runtimeOnly("org.postgresql:postgresql")
+    compile("io.reactivex.rxjava2:rxjava:2.2.0")
     compile("com.graphql-java:graphql-spring-boot-starter:5.0.2")
     compile("com.graphql-java:graphql-java-tools:5.2.4")
     compile("com.graphql-java:graphiql-spring-boot-starter:5.0.2")

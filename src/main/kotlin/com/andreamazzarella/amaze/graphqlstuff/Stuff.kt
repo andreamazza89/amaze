@@ -9,13 +9,9 @@ import org.springframework.stereotype.Component
 import java.util.UUID
 import io.reactivex.BackpressureStrategy
 import io.reactivex.Observable
-import io.reactivex.internal.operators.single.SingleInternalHelper.toFlowable
-import io.reactivex.observables.ConnectableObservable
 import io.reactivex.ObservableEmitter
 import org.joda.time.DateTime
-import java.util.concurrent.TimeUnit
-import java.util.concurrent.Executors
-import java.util.concurrent.ScheduledExecutorService
+import org.springframework.beans.factory.annotation.Autowired
 import kotlin.concurrent.fixedRateTimer
 
 ////////////
@@ -29,15 +25,19 @@ class Query: GraphQLQueryResolver {
 }
 
 @Component
+class SaySomething(@Autowired val chatPublisher: MyChatPublisher): GraphQLMutationResolver {
+    fun saySomething(message: String): String {
+        chatPublisher.emitter!!.onNext(message)
+        return "Well said"
+    }
+}
+
+
+@Component
 class Mutation: GraphQLMutationResolver {
     fun createAMaze(mazeRunner: String): MazeId {
         return UUID.randomUUID()
     }
-}
-
-@Component
-class Subscription: GraphQLSubscriptionResolver {
-    fun tellMeSeconds(): Publisher<Int> = CommentPublisher().publisher
 }
 
 typealias MazeId = UUID
@@ -48,28 +48,52 @@ typealias MazeId = UUID
 data class MazeResponse(private val yourPosition: PositionResponse)
 data class PositionResponse(private val x: Int, private val y: Int)
 
+////////////////////////
+// subscriptions
+
 @Component
-class CommentPublisher {
+class SecondsSubscription: GraphQLSubscriptionResolver {
+    fun tellMeSeconds(): Publisher<Int> = MySecondsPublisher().publisher
+}
 
-    val publisher: Flowable<Int>
 
-    private var emitter: ObservableEmitter<Int>? = null
+@Component
+class MySecondsPublisher {
+    final val publisher: Flowable<Int>
 
     init {
-        val commentUpdateObservable = Observable.create<Int> { emitter ->
-            fixedRateTimer(name = "hello-timer",
-                initialDelay = 100, period = 100) {
+        val myObservable = Observable.create<Int> { emitter ->
+            fixedRateTimer(initialDelay = 100, period = 100) {
                 emitter.onNext(DateTime.now().secondOfDay)
             }
         }
 
-        val connectableObservable = commentUpdateObservable.share().publish()
+        val connectableObservable = myObservable.share().publish()
         connectableObservable.connect()
 
         publisher = connectableObservable.toFlowable(BackpressureStrategy.BUFFER)
     }
+}
 
-    fun publish(note: Int) {
-        emitter!!.onNext(42)
+@Component
+class ChatSubscription(@Autowired val chatPublisher: MyChatPublisher): GraphQLSubscriptionResolver {
+    fun tellMeWhatOthersSay(): Publisher<String> = chatPublisher.publisher
+}
+
+
+@Component
+class MyChatPublisher {
+    final var emitter: ObservableEmitter<String>? = null
+    final val publisher: Flowable<String>
+
+    init {
+        val myObservable = Observable.create<String> { emitter -> this.emitter = emitter }
+
+        val connectableObservable = myObservable.share().publish()
+        connectableObservable.connect()
+
+        publisher = connectableObservable.toFlowable(BackpressureStrategy.BUFFER)
     }
 }
+
+

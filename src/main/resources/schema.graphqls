@@ -4,10 +4,12 @@ type Query {
 
 type Mutation {
     createAMaze(mazeRunner: String!): ID!
+    saySomething(message: String!): String
 }
 
 type Subscription {
     tellMeSeconds: Int!
+    tellMeWhatOthersSay: String
 }
 
 type Maze {

@@ -1,30 +1,16 @@
-import ApolloClient from "apollo-client";
-import { WebSocketLink } from "apollo-link-ws";
-import gql from "graphql-tag";
-import { InMemoryCache } from "apollo-cache-inmemory";
-import { Elm } from "./elm/Main.elm";
-
-const GRAPHQL_URI = "localhost:8080/subscriptions";
-
-const wsLink = new WebSocketLink({
-  uri: `ws://${GRAPHQL_URI}`
-});
-
-const client = new ApolloClient({
-  link: wsLink,
-  cache: new InMemoryCache({
-    addTypename: true
-  })
-});
+import {Elm} from "./elm/Main"
 
 const app = Elm.Main.init({
-  node: document.getElementById("elm")
+    flags: null,
+    node: document.getElementById("elm")
 });
 
+const webSocket = new WebSocket('ws://localhost:8080/subscriptions');
+
 app.ports.tellMeSeconds.subscribe(subscription => {
-  client.subscribe({ query: gql(subscription) }).subscribe({
-    next(response) {
-      app.ports.secondsReceived.send(JSON.stringify(response));
-    }
-  });
+    webSocket.send(JSON.stringify({query: subscription}));
 });
+
+webSocket.onmessage = (message) => {
+    app.ports.secondsReceived.send(message.data);
+};

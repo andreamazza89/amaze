@@ -1,9 +1,10 @@
 type Query {
-    myMaze(mazeId: ID!): Maze
+    myMaze(mazeId: ID!): MazeInfo
 }
 
 type Mutation {
     createAMaze(mazeRunner: String!): ID!
+    takeAStep(mazeId: ID!, stepDirection: Direction!): StepResult!
     saySomething(message: String!): String
 }
 
@@ -12,11 +13,29 @@ type Subscription {
     tellMeWhatOthersSay: String
 }
 
-type Maze {
+type MazeInfo {
+    maze: Maze!,
     yourPosition: Position!
+}
+
+type Maze {
+    rows: Int!
 }
 
 type Position {
     x: Int!
     y: Int!
+}
+
+enum Direction {
+    UP
+    RIGHT
+    DOWN
+    LEFT
+}
+
+union StepResult = HitAWall | Position
+
+type HitAWall {
+    message: String!
 }

@@ -19,8 +19,8 @@ import kotlin.concurrent.fixedRateTimer
 
 @Component
 class Query: GraphQLQueryResolver {
-    fun myMaze(mazeId: UUID): MazeResponse {
-        return MazeResponse(PositionResponse(42, 42))
+    fun myMaze(mazeId: UUID): MazeInfoResponse {
+        return MazeInfoResponse(MazeResponse(42), PositionResponse(42, 42))
     }
 }
 
@@ -45,7 +45,8 @@ typealias MazeId = UUID
 ////////////////////////
 // data transfer objects
 
-data class MazeResponse(private val yourPosition: PositionResponse)
+data class MazeInfoResponse(private val maze: MazeResponse, private val yourPosition: PositionResponse)
+data class MazeResponse(private val rows: Int)
 data class PositionResponse(private val x: Int, private val y: Int)
 
 ////////////////////////

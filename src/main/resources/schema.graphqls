@@ -34,8 +34,16 @@ enum Direction {
     LEFT
 }
 
-union StepResult = HitAWall | Position
+union StepResult = MazeDoesNotExist | HitAWall | NewPosition
+
+type MazeDoesNotExist {
+    message: String!
+}
 
 type HitAWall {
     message: String!
+}
+
+type NewPosition {
+    position: Position!
 }

@@ -33,7 +33,8 @@ class Configuration() {
 // resolvers
 
 @Component
-class Query : GraphQLQueryResolver {
+class Query: GraphQLQueryResolver {
+
     fun myMaze(mazeId: UUID): MazeInfoResponse {
         return MazeInfoResponse(MazeResponse(42), PositionResponse(42, 42))
     }
@@ -66,6 +67,7 @@ typealias MazeId = UUID
 
 ////////////////////////
 // data transfer objects
+
 
 enum class StepDirectionRequest { UP, RIGHT, DOWN, LEFT }
 

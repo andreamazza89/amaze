@@ -3,7 +3,6 @@ package com.andreamazzarella.amaze.persistence
 import com.andreamazzarella.amaze.core.Maze
 import com.andreamazzarella.amaze.core.MazeId
 import com.andreamazzarella.amaze.core.Position
-import com.andreamazzarella.amaze.core.StepError
 import com.andreamazzarella.amaze.core.createAMaze
 import com.andreamazzarella.amaze.utils.Result
 import java.util.UUID
@@ -11,7 +10,7 @@ import java.util.UUID
 class MazeRepository {
     private val mazes: MutableMap<MazeId, Maze> = mutableMapOf()
 
-    fun findAMaze(mazeId: MazeId): Result<Maze, StepError> {
+    fun findAMaze(mazeId: MazeId): Result<Maze, MazeNotFoundError> {
         return Result.Ok(createAMaze())
     }
 
@@ -19,7 +18,7 @@ class MazeRepository {
         return Result.Ok(mazes[mazeId]!!)
     }
 
-    fun updatePosition(mazeId: MazeId, newPosition: Position): Result<Position, StepError> {
+    fun updatePosition(mazeId: MazeId, newPosition: Position): Result<Position, MazeNotFoundError> {
         mazes[mazeId] = mazes[mazeId]!!.withPosition(newPosition)
         return Result.Ok(newPosition)
     }
@@ -30,3 +29,5 @@ class MazeRepository {
         return mazeId
     }
 }
+
+data class MazeNotFoundError(val message: String = "maze was not found")

@@ -10,4 +10,11 @@ sealed class Result<O, E> {
             is Error -> Error(this.errorValue)
         }
     }
+
+    fun <OtherErrorType> mapError(toError: (E) -> OtherErrorType): Result<O, OtherErrorType> {
+        return when (this) {
+            is Ok -> Ok(this.okValue)
+            is Error -> Error(toError(this.errorValue))
+        }
+    }
 }

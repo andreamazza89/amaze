@@ -6,13 +6,15 @@ import java.util.UUID
 typealias MazeId = UUID
 
 data class Maze(private val id: MazeId, val currentPosition: Position) {
-    fun takeAStep(direction: StepDirection): Result<Position, StepError> {
+    fun takeAStep(direction: StepDirection): Result<Position, HitAWallError> {
         val newPosition = this.currentPosition.nearby(direction)
         return Result.Ok(newPosition)
     }
 
     fun withPosition(newPosition: Position): Maze = this.copy(currentPosition = newPosition)
 }
+
+data class HitAWallError(val message: String = "you hit a wall")
 
 enum class StepDirection { UP, RIGHT, DOWN, LEFT }
 data class Position(private val row: Row, private val column: Column) {

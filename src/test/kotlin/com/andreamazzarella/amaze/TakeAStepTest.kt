@@ -11,6 +11,7 @@ import com.andreamazzarella.amaze.core.TakeAStep
 import com.andreamazzarella.amaze.persistence.MazeRepository
 import com.andreamazzarella.amaze.utils.Result
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.fail
 import org.junit.jupiter.api.Test
 
 class TakeAStepTest {
@@ -25,7 +26,7 @@ class TakeAStepTest {
 
         val stepResult = takeAStep.doIt(mazeId, StepDirection.RIGHT)
 
-        assertEquals(Result.Ok<Position, String>(Position(Row(1), Column(2))), stepResult)
+        assertOkEquals(Position(Row(1), Column(2)), stepResult)
     }
 
     @Test
@@ -36,7 +37,14 @@ class TakeAStepTest {
 
         val updatedMaze = getAMaze.doIt(mazeId)
         val expectedPosition = Position(Row(0), Column(1))
-        assertEquals(Result.Ok<Maze, String>(Maze(mazeId, expectedPosition)), updatedMaze)
+        assertOkEquals(Maze(mazeId, expectedPosition), updatedMaze)
     }
 }
 
+private fun <O, E> assertOkEquals(expected: O, result: Result<O, E>) {
+    when (result) {
+        is Result.Ok -> assertEquals(result.okValue, expected)
+        is Result.Error -> fail("Expected result to be ok, but was an error")
+    }
+
+}

@@ -4,15 +4,21 @@ import com.andreamazzarella.amaze.core.Column
 import com.andreamazzarella.amaze.core.GetAMaze
 import com.andreamazzarella.amaze.core.MakeAMaze
 import com.andreamazzarella.amaze.core.Maze
+import com.andreamazzarella.amaze.core.MazeNotFound
 import com.andreamazzarella.amaze.core.Position
 import com.andreamazzarella.amaze.core.Row
 import com.andreamazzarella.amaze.core.StepDirection
+import com.andreamazzarella.amaze.core.StepError
 import com.andreamazzarella.amaze.core.TakeAStep
+import com.andreamazzarella.amaze.persistence.MazeNotFoundError
 import com.andreamazzarella.amaze.persistence.MazeRepository
+import com.andreamazzarella.amaze.utils.Err
+import com.andreamazzarella.amaze.utils.Ok
 import com.andreamazzarella.amaze.utils.Result
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.fail
 import org.junit.jupiter.api.Test
+import java.util.UUID
 
 class TakeAStepTest {
     private val mazeRepository = MazeRepository()
@@ -39,12 +45,20 @@ class TakeAStepTest {
         val expectedPosition = Position(Row(0), Column(1))
         assertOkEquals(Maze(mazeId, expectedPosition), updatedMaze)
     }
+
+    @Test
+    fun `trying to take a step with an invalid mazeId results in an error`() {
+        makeAMaze.doIt()
+
+        val stepResult = takeAStep.doIt(UUID.randomUUID(), StepDirection.UP)
+
+        assertEquals(Err<Position, StepError>(StepError(MazeNotFound)), stepResult)
+    }
 }
 
 private fun <O, E> assertOkEquals(expected: O, result: Result<O, E>) {
     when (result) {
-        is Result.Ok -> assertEquals(result.okValue, expected)
-        is Result.Error -> fail("Expected result to be ok, but was an error")
+        is Ok -> assertEquals(result.okValue, expected)
+        is Err -> fail("Expected result to be ok, but was an error")
     }
-
 }

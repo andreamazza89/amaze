@@ -1,5 +1,5 @@
 type Query {
-    myMaze(mazeId: ID!): MazeInfo
+    myMaze(mazeId: ID!): MazeInfo!
 }
 
 type Mutation {

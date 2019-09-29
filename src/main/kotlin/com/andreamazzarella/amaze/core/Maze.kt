@@ -1,5 +1,6 @@
 package com.andreamazzarella.amaze.core
 
+import com.andreamazzarella.amaze.utils.Ok
 import com.andreamazzarella.amaze.utils.Result
 import java.util.UUID
 
@@ -8,7 +9,7 @@ typealias MazeId = UUID
 data class Maze(private val id: MazeId, val currentPosition: Position) {
     fun takeAStep(direction: StepDirection): Result<Position, HitAWallError> {
         val newPosition = this.currentPosition.nearby(direction)
-        return Result.Ok(newPosition)
+        return Ok(newPosition)
     }
 
     fun withPosition(newPosition: Position): Maze = this.copy(currentPosition = newPosition)

@@ -2,6 +2,8 @@ package com.andreamazzarella.amaze.core
 
 import com.andreamazzarella.amaze.persistence.MazeRepository
 import com.andreamazzarella.amaze.utils.Result
+import com.andreamazzarella.amaze.utils.andThen
+import com.andreamazzarella.amaze.utils.mapError
 
 class TakeAStep(private val mazeRepository: MazeRepository = MazeRepository()) {
 

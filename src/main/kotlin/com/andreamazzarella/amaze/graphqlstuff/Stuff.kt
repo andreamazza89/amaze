@@ -33,8 +33,7 @@ class Configuration() {
 // resolvers
 
 @Component
-class Query: GraphQLQueryResolver {
-
+class MyMaze: GraphQLQueryResolver {
     fun myMaze(mazeId: UUID): MazeInfoResponse {
         return MazeInfoResponse(MazeResponse(42), PositionResponse(42, 42))
     }

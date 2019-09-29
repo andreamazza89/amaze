@@ -48,7 +48,7 @@ class SaySomething(@Autowired val chatPublisher: MyChatPublisher) : GraphQLMutat
 }
 
 @Component
-class Mutation : GraphQLMutationResolver {
+class CreateAMaze : GraphQLMutationResolver {
     fun createAMaze(mazeRunner: String): MazeId = UUID.randomUUID()
 }
 

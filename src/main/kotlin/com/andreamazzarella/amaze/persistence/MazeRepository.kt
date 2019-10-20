@@ -3,21 +3,23 @@ package com.andreamazzarella.amaze.persistence
 import com.andreamazzarella.amaze.core.Maze
 import com.andreamazzarella.amaze.core.MazeId
 import com.andreamazzarella.amaze.core.Position
-import com.andreamazzarella.amaze.core.createAMaze
 import com.andreamazzarella.amaze.utils.Err
 import com.andreamazzarella.amaze.utils.Ok
 import com.andreamazzarella.amaze.utils.Result
-import java.util.UUID
 
 class MazeRepository {
     private val mazes: MutableMap<MazeId, Maze> = mutableMapOf()
 
-    fun findAMaze(mazeId: MazeId): Result<Maze, MazeNotFoundError> {
-        return Ok(createAMaze())
+    fun save(mazeId: MazeId, maze: Maze) {
+        mazes[mazeId] = maze
     }
 
-    fun findById(mazeId: MazeId): Result<Maze, String> {
-        return Ok(mazes[mazeId]!!)
+    fun findAMaze(mazeId: MazeId): Result<Maze, MazeNotFoundError> {
+        return if (mazes[mazeId] != null) {
+            Ok(mazes[mazeId]!!)
+        } else {
+            Err(MazeNotFoundError())
+        }
     }
 
     fun updatePosition(mazeId: MazeId, newPosition: Position): Result<Position, MazeNotFoundError> {
@@ -30,10 +32,8 @@ class MazeRepository {
         }
     }
 
-    fun createOne(): MazeId {
-        val mazeId = UUID.randomUUID()
-        mazes[mazeId] = createAMaze(mazeId)
-        return mazeId
+    fun deleteAll() {
+        mazes.clear()
     }
 }
 

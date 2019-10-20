@@ -26,6 +26,8 @@ class Configuration() {
             .add(StepResultResponse.HitAWall::class)
             .add(StepResultResponse.MazeDoesNotExist::class)
             .add(StepResultResponse.NewPosition::class)
+            .add(CellResponse.Wall::class)
+            .add(CellResponse.Floor::class)
     }
 }
 
@@ -35,7 +37,7 @@ class Configuration() {
 @Component
 class MyMaze: GraphQLQueryResolver {
     fun myMaze(mazeId: UUID): MazeInfoResponse {
-        return MazeInfoResponse(MazeResponse(42), PositionResponse(42, 42))
+        return MazeInfoResponse(MazeResponse(listOf(CellResponse.Wall(PositionResponse(33, 33)))), PositionResponse(42, 42))
     }
 }
 
@@ -71,7 +73,13 @@ typealias MazeId = UUID
 enum class StepDirectionRequest { UP, RIGHT, DOWN, LEFT }
 
 data class MazeInfoResponse(private val maze: MazeResponse, private val yourPosition: PositionResponse)
-data class MazeResponse(private val rows: Int)
+data class MazeResponse(private val cells: List<CellResponse>)
+sealed class CellResponse {
+    abstract val position: PositionResponse
+
+    data class Wall(override val position: PositionResponse) : CellResponse()
+    data class Floor(override val position: PositionResponse) : CellResponse()
+}
 data class PositionResponse(private val x: Int, private val y: Int)
 sealed class StepResultResponse {
     data class MazeDoesNotExist(val message: String) : StepResultResponse()

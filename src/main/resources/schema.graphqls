@@ -19,7 +19,17 @@ type MazeInfo {
 }
 
 type Maze {
-    rows: Int!
+    cells: [Cell]!
+}
+
+union Cell = Wall | Floor
+
+type Wall {
+    position: Position
+}
+
+type Floor {
+    position: Position
 }
 
 type Position {

@@ -12,5 +12,6 @@ app.ports.tellMeSeconds.subscribe(subscription => {
 });
 
 webSocket.onmessage = (message) => {
-    app.ports.secondsReceived.send(message.data);
+    console.log(message);
+    app.ports.mazesInformationReceived.send(message.data);
 };

@@ -3,7 +3,7 @@ package com.andreamazzarella.amaze.core
 import java.lang.RuntimeException
 import java.util.UUID
 
-fun aMazeFromADrawing(id: UUID, drawing: String): Maze {
+fun aMazeFromADrawing(drawing: String, id: UUID = UUID.randomUUID()): Maze {
     val rows = drawing.split("\n").map { row -> row.toList() }
     val cells = gatherCells(rows)
     val currentPosition = findCurrentPosition(rows)

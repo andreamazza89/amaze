@@ -1,5 +1,21 @@
 package com.andreamazzarella.amaze.graphqlstuff
 
+import com.andreamazzarella.amaze.core.Floor
+import com.andreamazzarella.amaze.core.GetAMaze
+import com.andreamazzarella.amaze.core.HitAWall
+import com.andreamazzarella.amaze.core.MakeAMaze
+import com.andreamazzarella.amaze.core.Maze
+import com.andreamazzarella.amaze.core.MazeNotFound
+import com.andreamazzarella.amaze.core.OutsideMaze
+import com.andreamazzarella.amaze.core.Position
+import com.andreamazzarella.amaze.core.StepDirection
+import com.andreamazzarella.amaze.core.TakeAStep
+import com.andreamazzarella.amaze.core.TakeAStepError
+import com.andreamazzarella.amaze.core.Wall
+import com.andreamazzarella.amaze.persistence.MazeNotFoundError
+import com.andreamazzarella.amaze.utils.Err
+import com.andreamazzarella.amaze.utils.Ok
+import com.andreamazzarella.amaze.utils.Result
 import com.coxautodev.graphql.tools.GraphQLMutationResolver
 import com.coxautodev.graphql.tools.GraphQLQueryResolver
 import com.coxautodev.graphql.tools.GraphQLSubscriptionResolver
@@ -35,10 +51,28 @@ class Configuration() {
 // resolvers
 
 @Component
-class MyMaze: GraphQLQueryResolver {
+class MyMaze(@Autowired val getAMaze: GetAMaze): GraphQLQueryResolver {
     fun myMaze(mazeId: UUID): MazeInfoResponse {
-        return MazeInfoResponse(MazeResponse(listOf(CellResponse.Wall(PositionResponse(33, 33)))), PositionResponse(42, 42))
+        val getAMazeResult = getAMaze.doIt(mazeId)
+        return toMazeInfoResponse(getAMazeResult)
     }
+
+    private fun toMazeInfoResponse(findMazeResult: Result<Maze, MazeNotFoundError>): MazeInfoResponse =
+        when (findMazeResult) {
+            is Ok -> MazeInfoResponse(
+                MazeResponse(toCellsResponse(findMazeResult.okValue)),
+                toPositionResponse(findMazeResult.okValue.currentPosition)
+            )
+            is Err -> TODO()
+        }
+
+    private fun toCellsResponse(maze: Maze): List<CellResponse> =
+        maze.cells.map { cell ->
+            when (cell) {
+                is Wall -> CellResponse.Wall(toPositionResponse(cell.position))
+                is Floor -> CellResponse.Floor(toPositionResponse(cell.position))
+                is OutsideMaze -> TODO()
+            }}
 }
 
 @Component
@@ -50,19 +84,40 @@ class SaySomething(@Autowired val chatPublisher: MyChatPublisher) : GraphQLMutat
 }
 
 @Component
-class CreateAMaze : GraphQLMutationResolver {
-    fun createAMaze(mazeRunner: String): MazeId = UUID.randomUUID()
+class CreateAMaze(@Autowired val makeAMaze: MakeAMaze) : GraphQLMutationResolver {
+    fun createAMaze(mazeRunner: String): MazeId = makeAMaze.doIt()
 }
 
 @Component
-class TakeAStep : GraphQLMutationResolver {
+class TakeAStepInTheMaze(@Autowired val takeAStep: TakeAStep) : GraphQLMutationResolver {
     fun takeAStep(mazeId: MazeId, stepDirection: StepDirectionRequest): StepResultResponse {
-        // to domain action
-        // attemptStep
-        // convert result
-        return StepResultResponse.HitAWall("You hit a wall")
+        val stepResult = takeAStep.doIt(mazeId, fromStepDirectionRequest(stepDirection))
+        return toStepResultResponse(stepResult)
     }
+
+    private fun toStepResultResponse(stepResult: Result<Position, TakeAStepError>): StepResultResponse =
+        when (stepResult) {
+            is Ok -> StepResultResponse.NewPosition(toPositionResponse(stepResult.okValue))
+            is Err -> toStepResultErrorResponse(stepResult.errorValue)
+        }
+
+    private fun toStepResultErrorResponse(error: TakeAStepError): StepResultResponse =
+        when (error.error) {
+            MazeNotFound -> StepResultResponse.MazeDoesNotExist("could not find your maze")
+            HitAWall -> StepResultResponse.HitAWall("you hit a wall")
+        }
+
+    private fun fromStepDirectionRequest(stepDirection: StepDirectionRequest): StepDirection =
+        when (stepDirection) {
+            StepDirectionRequest.UP -> StepDirection.UP
+            StepDirectionRequest.RIGHT -> StepDirection.RIGHT
+            StepDirectionRequest.DOWN -> StepDirection.DOWN
+            StepDirectionRequest.LEFT -> StepDirection.LEFT
+        }
+
 }
+
+private fun toPositionResponse(position: Position) = PositionResponse(position.x(), position.y())
 
 typealias MazeId = UUID
 

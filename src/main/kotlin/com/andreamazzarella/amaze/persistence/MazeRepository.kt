@@ -6,7 +6,9 @@ import com.andreamazzarella.amaze.core.Position
 import com.andreamazzarella.amaze.utils.Err
 import com.andreamazzarella.amaze.utils.Ok
 import com.andreamazzarella.amaze.utils.Result
+import org.springframework.stereotype.Repository
 
+@Repository
 class MazeRepository {
     private val mazes: MutableMap<MazeId, Maze> = mutableMapOf()
 
@@ -22,6 +24,7 @@ class MazeRepository {
         }
     }
 
+
     fun updatePosition(mazeId: MazeId, newPosition: Position): Result<Position, MazeNotFoundError> {
         val mazeToUpdate = mazes[mazeId]
         return if (mazeToUpdate == null) {
@@ -30,10 +33,6 @@ class MazeRepository {
             mazes[mazeId] = mazes[mazeId]!!.withPosition(newPosition)
             Ok(newPosition)
         }
-    }
-
-    fun deleteAll() {
-        mazes.clear()
     }
 }
 

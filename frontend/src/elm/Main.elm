@@ -37,6 +37,7 @@ main =
 type alias Model =
     { position : Maybe Position
     , seconds : Maybe Int
+    , mazes : List MazeInformation
     }
 
 
@@ -49,8 +50,12 @@ type alias Position =
 type Msg
     = GetPositionClicked
     | PositionResponseRecevied (Result (Graphql.Http.Error (Maybe Position)) (Maybe Position))
-    | SecondsResponseReceived String
+    | MazesInformationReceived (List MazeInformation)
     | TellMeSeconds
+
+
+type alias MazeInformation =
+    { currentPosition : Position }
 
 
 
@@ -66,6 +71,7 @@ initialModel : Model
 initialModel =
     { position = Nothing
     , seconds = Nothing
+    , mazes = []
     }
 
 
@@ -77,7 +83,7 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         GetPositionClicked ->
-            ( model, getPosition )
+            ( model, Cmd.none )
 
         PositionResponseRecevied (Ok response) ->
             ( { model | position = response }, Cmd.none )
@@ -88,37 +94,34 @@ update msg model =
         TellMeSeconds ->
             ( model, tellMeSeconds <| Graphql.Document.serializeSubscription Subscription.tellMeSeconds )
 
-        SecondsResponseReceived response ->
-            ( { model | seconds = decodeSeconds response }, Cmd.none )
-
-
-getPosition : Cmd Msg
-getPosition =
-    myMazePosition
-        |> Graphql.Http.queryRequest "http://localhost:8080/graphql"
-        |> Graphql.Http.send PositionResponseRecevied
+        MazesInformationReceived mazes ->
+            ( { model | mazes = mazes }, Cmd.none )
 
 
 
+--getPosition : Cmd Msg
+--getPosition =
+--    myMazePosition
+--        |> Graphql.Http.queryRequest "http://localhost:8080/graphql"
+--        |> Graphql.Http.send PositionResponseRecevied
 -- Graphql
 
 
 port tellMeSeconds : String -> Cmd msg
 
 
-port secondsReceived : (String -> msg) -> Sub msg
+port mazesInformationReceived : (List MazeInformation -> msg) -> Sub msg
 
 
-myMazePosition : SelectionSet.SelectionSet (Maybe Position) RootQuery
-myMazePosition =
-    Query.myMaze { mazeId = Id "f0f57c20-0b6f-4e92-8438-8150549c574d" } position
 
-
-position : SelectionSet.SelectionSet Position Object.Maze
-position =
-    SelectionSet.map2 Position
-        (Maze.yourPosition Position.x)
-        (Maze.yourPosition Position.y)
+--myMazePosition : SelectionSet.SelectionSet (Maybe Position) RootQuery
+--myMazePosition =
+--    Query.myMaze { mazeId = Id "f0f57c20-0b6f-4e92-8438-8150549c574d" } position
+--position : SelectionSet.SelectionSet Position Object.Maze
+--position =
+--    SelectionSet.map2 Position
+--        (Maze.yourPosition Position.x)
+--        (Maze.yourPosition Position.y)
 
 
 decodeSeconds : String -> Maybe Int
@@ -134,7 +137,7 @@ decodeSeconds response =
 
 subscriptions : Model -> Sub Msg
 subscriptions _ =
-    secondsReceived SecondsResponseReceived
+    mazesInformationReceived MazesInformationReceived
 
 
 
@@ -148,6 +151,7 @@ view model =
         , button [ onClick GetPositionClicked ] [ text "Get the position!" ]
         , button [ onClick TellMeSeconds ] [ text "plz tell me seconds" ]
         , showSeconds model.seconds
+        , p [] [ text <| String.fromInt <| List.length model.mazes ]
         ]
 
 

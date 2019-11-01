@@ -9,8 +9,8 @@ export namespace Elm {
         tellMeSeconds: {
           subscribe(callback: (data: string) => void): void
         }
-        secondsReceived: {
-          send(data: string): void
+        mazesInformationReceived: {
+          send(data: { currentPosition: { x: number; y: number } }[]): void
         }
       };
     }

@@ -5,12 +5,10 @@ type Query {
 type Mutation {
     createAMaze(mazeRunner: String!): ID!
     takeAStep(mazeId: ID!, stepDirection: Direction!): StepResult!
-    saySomething(message: String!): String
 }
 
 type Subscription {
-    tellMeSeconds: Int!
-    tellMeWhatOthersSay: String
+    allMazes: [MazeInfo!]!
 }
 
 type MazeInfo {

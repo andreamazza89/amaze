@@ -16,6 +16,8 @@ class MazeRepository {
         mazes[mazeId] = maze
     }
 
+    fun allMazes(): List<Maze> = mazes.values.toList()
+
     fun findAMaze(mazeId: MazeId): Result<Maze, MazeNotFoundError> {
         return if (mazes[mazeId] != null) {
             Ok(mazes[mazeId]!!)
@@ -23,7 +25,6 @@ class MazeRepository {
             Err(MazeNotFoundError())
         }
     }
-
 
     fun updatePosition(mazeId: MazeId, newPosition: Position): Result<Position, MazeNotFoundError> {
         val mazeToUpdate = mazes[mazeId]

@@ -7,11 +7,10 @@ const app = Elm.Main.init({
 
 const webSocket = new WebSocket('ws://localhost:8080/subscriptions');
 
-app.ports.tellMeSeconds.subscribe(subscription => {
+app.ports.mazeUpdates.subscribe(subscription => {
     webSocket.send(JSON.stringify({query: subscription}));
 });
 
 webSocket.onmessage = (message) => {
-    console.log(message);
-    app.ports.mazesInformationReceived.send(message.data);
+    app.ports.mazesInformationReceived.send(JSON.parse(message.data));
 };

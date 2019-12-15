@@ -10,7 +10,10 @@ export namespace Elm {
           subscribe(callback: (data: string) => void): void
         }
         mazesInformationReceived: {
-          send(data: { currentPosition: { x: number; y: number } }[]): void
+          send(data: any): void
+        }
+        mazeUpdates: {
+          subscribe(callback: (data: string) => void): void
         }
       };
     }

@@ -1,16 +1,13 @@
 port module Main exposing (main)
 
-import Api.Object as Object
-import Api.Object.Maze as Maze
-import Api.Object.Position as Position
-import Api.Query as Query
-import Api.Scalar exposing (Id(..))
+import Api.Object
+import Api.Object.MazeInfo
+import Api.Object.Position
 import Api.Subscription as Subscription
 import Browser
 import Graphql.Document
-import Graphql.Http
-import Graphql.Operation exposing (RootQuery)
-import Graphql.SelectionSet as SelectionSet
+import Graphql.Operation exposing (RootSubscription)
+import Graphql.SelectionSet as SelectionSet exposing (SelectionSet(..), with)
 import Html exposing (Html, button, div, p, text)
 import Html.Events exposing (onClick)
 import Json.Decode as Decode
@@ -35,27 +32,23 @@ main =
 
 
 type alias Model =
-    { position : Maybe Position
-    , seconds : Maybe Int
-    , mazes : List MazeInformation
-    }
-
-
-type alias Position =
-    { x : Int
-    , y : Int
+    { mazes : List MazeInfoInternal
     }
 
 
 type Msg
-    = GetPositionClicked
-    | PositionResponseRecevied (Result (Graphql.Http.Error (Maybe Position)) (Maybe Position))
-    | MazesInformationReceived (List MazeInformation)
-    | TellMeSeconds
+    = MazesInformationReceived Decode.Value
+    | SubscribeToMazeUpdates
 
 
-type alias MazeInformation =
-    { currentPosition : Position }
+type alias MazeInfoInternal =
+    { position : PositionInternal }
+
+
+type alias PositionInternal =
+    { x : Int
+    , y : Int
+    }
 
 
 
@@ -69,9 +62,7 @@ init _ =
 
 initialModel : Model
 initialModel =
-    { position = Nothing
-    , seconds = Nothing
-    , mazes = []
+    { mazes = []
     }
 
 
@@ -82,53 +73,39 @@ initialModel =
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        GetPositionClicked ->
-            ( model, Cmd.none )
+        MazesInformationReceived mazeInfo ->
+            case Decode.decodeValue mazeInfoDecoder mazeInfo of
+                Ok mazesInfo ->
+                    ( { model | mazes = mazesInfo }, Cmd.none )
 
-        PositionResponseRecevied (Ok response) ->
-            ( { model | position = response }, Cmd.none )
+                Err _ ->
+                    ( model, Cmd.none )
 
-        PositionResponseRecevied (Err _) ->
-            ( model, Cmd.none )
-
-        TellMeSeconds ->
-            ( model, tellMeSeconds <| Graphql.Document.serializeSubscription Subscription.tellMeSeconds )
-
-        MazesInformationReceived mazes ->
-            ( { model | mazes = mazes }, Cmd.none )
+        SubscribeToMazeUpdates ->
+            ( model, subscribeToMazesUpdates )
 
 
-
---getPosition : Cmd Msg
---getPosition =
---    myMazePosition
---        |> Graphql.Http.queryRequest "http://localhost:8080/graphql"
---        |> Graphql.Http.send PositionResponseRecevied
--- Graphql
+mazeInfoDecoder : Decode.Decoder (List MazeInfoInternal)
+mazeInfoDecoder =
+    Graphql.Document.decoder mazesSelection
 
 
-port tellMeSeconds : String -> Cmd msg
+mazesSelection : SelectionSet (List MazeInfoInternal) RootSubscription
+mazesSelection =
+    Subscription.allMazes mazeInfoSelection
 
 
-port mazesInformationReceived : (List MazeInformation -> msg) -> Sub msg
+mazeInfoSelection : SelectionSet MazeInfoInternal Api.Object.MazeInfo
+mazeInfoSelection =
+    SelectionSet.succeed MazeInfoInternal
+        |> with (Api.Object.MazeInfo.yourPosition positionSelection)
 
 
-
---myMazePosition : SelectionSet.SelectionSet (Maybe Position) RootQuery
---myMazePosition =
---    Query.myMaze { mazeId = Id "f0f57c20-0b6f-4e92-8438-8150549c574d" } position
---position : SelectionSet.SelectionSet Position Object.Maze
---position =
---    SelectionSet.map2 Position
---        (Maze.yourPosition Position.x)
---        (Maze.yourPosition Position.y)
-
-
-decodeSeconds : String -> Maybe Int
-decodeSeconds response =
-    response
-        |> Decode.decodeString (Graphql.Document.decoder Subscription.tellMeSeconds)
-        |> Result.toMaybe
+positionSelection : SelectionSet PositionInternal Api.Object.Position
+positionSelection =
+    SelectionSet.succeed PositionInternal
+        |> with Api.Object.Position.x
+        |> with Api.Object.Position.y
 
 
 
@@ -140,6 +117,17 @@ subscriptions _ =
     mazesInformationReceived MazesInformationReceived
 
 
+subscribeToMazesUpdates : Cmd msg
+subscribeToMazesUpdates =
+    mazeUpdates <| Graphql.Document.serializeSubscription mazesSelection
+
+
+port mazesInformationReceived : (Decode.Value -> msg) -> Sub msg
+
+
+port mazeUpdates : String -> Cmd msg
+
+
 
 -- View
 
@@ -147,29 +135,11 @@ subscriptions _ =
 view : Model -> Html Msg
 view model =
     div []
-        [ showPosition model.position
-        , button [ onClick GetPositionClicked ] [ text "Get the position!" ]
-        , button [ onClick TellMeSeconds ] [ text "plz tell me seconds" ]
-        , showSeconds model.seconds
-        , p [] [ text <| String.fromInt <| List.length model.mazes ]
+        [ button [ onClick SubscribeToMazeUpdates ] [ text "subscribe to maze updates" ]
+        , div [] <| List.map viewMazeInfo model.mazes
         ]
 
 
-showSeconds : Maybe Int -> Html msg
-showSeconds seconds =
-    case seconds of
-        Just s ->
-            p [] [ text <| "Seconds: " ++ String.fromInt s ]
-
-        Nothing ->
-            text ""
-
-
-showPosition : Maybe Position -> Html msg
-showPosition position_ =
-    case position_ of
-        Just { x, y } ->
-            p [] [ text <| "Got the position! (" ++ String.fromInt x ++ ", " ++ String.fromInt y ++ ")" ]
-
-        Nothing ->
-            p [] [ text "No position yet" ]
+viewMazeInfo : MazeInfoInternal -> Html msg
+viewMazeInfo info =
+    p [] [ text <| "this is one maze; current x: " ++ String.fromInt info.position.x ++ ", y: " ++ String.fromInt info.position.y ]

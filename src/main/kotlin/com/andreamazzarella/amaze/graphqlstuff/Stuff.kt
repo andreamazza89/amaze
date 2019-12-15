@@ -13,6 +13,7 @@ import com.andreamazzarella.amaze.core.TakeAStep
 import com.andreamazzarella.amaze.core.TakeAStepError
 import com.andreamazzarella.amaze.core.Wall
 import com.andreamazzarella.amaze.persistence.MazeNotFoundError
+import com.andreamazzarella.amaze.persistence.MazeRepository
 import com.andreamazzarella.amaze.utils.Err
 import com.andreamazzarella.amaze.utils.Ok
 import com.andreamazzarella.amaze.utils.Result
@@ -24,14 +25,12 @@ import io.reactivex.BackpressureStrategy
 import io.reactivex.Flowable
 import io.reactivex.Observable
 import io.reactivex.ObservableEmitter
-import org.joda.time.DateTime
 import org.reactivestreams.Publisher
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.stereotype.Component
 import java.util.UUID
-import kotlin.concurrent.fixedRateTimer
 
 @Configuration
 class Configuration() {
@@ -51,37 +50,34 @@ class Configuration() {
 // resolvers
 
 @Component
-class MyMaze(@Autowired val getAMaze: GetAMaze): GraphQLQueryResolver {
+class MyMaze(@Autowired val getAMaze: GetAMaze) : GraphQLQueryResolver {
     fun myMaze(mazeId: UUID): MazeInfoResponse {
         val getAMazeResult = getAMaze.doIt(mazeId)
-        return toMazeInfoResponse(getAMazeResult)
+        return toMazeInfoResponseFromResult(getAMazeResult)
+    }
+}
+
+private fun toMazeInfoResponseFromResult(findMazeResult: Result<Maze, MazeNotFoundError>): MazeInfoResponse =
+    when (findMazeResult) {
+        is Ok -> toMazeInfoResponse(findMazeResult.okValue)
+        is Err -> TODO()
     }
 
-    private fun toMazeInfoResponse(findMazeResult: Result<Maze, MazeNotFoundError>): MazeInfoResponse =
-        when (findMazeResult) {
-            is Ok -> MazeInfoResponse(
-                MazeResponse(toCellsResponse(findMazeResult.okValue)),
-                toPositionResponse(findMazeResult.okValue.currentPosition)
-            )
-            is Err -> TODO()
+private fun toMazeInfoResponse(maze: Maze): MazeInfoResponse {
+    return MazeInfoResponse(
+        MazeResponse(toCellsResponse(maze)),
+        toPositionResponse(maze.currentPosition)
+    )
+}
+
+private fun toCellsResponse(maze: Maze): List<CellResponse> =
+    maze.cells.map { cell ->
+        when (cell) {
+            is Wall -> CellResponse.Wall(toPositionResponse(cell.position))
+            is Floor -> CellResponse.Floor(toPositionResponse(cell.position))
+            is OutsideMaze -> TODO()
         }
-
-    private fun toCellsResponse(maze: Maze): List<CellResponse> =
-        maze.cells.map { cell ->
-            when (cell) {
-                is Wall -> CellResponse.Wall(toPositionResponse(cell.position))
-                is Floor -> CellResponse.Floor(toPositionResponse(cell.position))
-                is OutsideMaze -> TODO()
-            }}
-}
-
-@Component
-class SaySomething(@Autowired val chatPublisher: MyChatPublisher) : GraphQLMutationResolver {
-    fun saySomething(message: String): String {
-        chatPublisher.emitter!!.onNext(message)
-        return "Well said"
     }
-}
 
 @Component
 class CreateAMaze(@Autowired val makeAMaze: MakeAMaze) : GraphQLMutationResolver {
@@ -89,7 +85,11 @@ class CreateAMaze(@Autowired val makeAMaze: MakeAMaze) : GraphQLMutationResolver
 }
 
 @Component
-class TakeAStepInTheMaze(@Autowired val takeAStep: TakeAStep) : GraphQLMutationResolver {
+class TakeAStepInTheMaze(
+    @Autowired val takeAStep: TakeAStep,
+    @Autowired val mazeRepository: MazeRepository,
+    @Autowired val mazesPublisher: MyMazesPublisher
+) : GraphQLMutationResolver {
     fun takeAStep(mazeId: MazeId, stepDirection: StepDirectionRequest): StepResultResponse {
         val stepResult = takeAStep.doIt(mazeId, fromStepDirectionRequest(stepDirection))
         return toStepResultResponse(stepResult)
@@ -97,7 +97,10 @@ class TakeAStepInTheMaze(@Autowired val takeAStep: TakeAStep) : GraphQLMutationR
 
     private fun toStepResultResponse(stepResult: Result<Position, TakeAStepError>): StepResultResponse =
         when (stepResult) {
-            is Ok -> StepResultResponse.NewPosition(toPositionResponse(stepResult.okValue))
+            is Ok -> {
+                mazesPublisher.emitter!!.onNext(mazeRepository.allMazes().map(::toMazeInfoResponse))
+                StepResultResponse.NewPosition(toPositionResponse(stepResult.okValue))
+            }
             is Err -> toStepResultErrorResponse(stepResult.errorValue)
         }
 
@@ -114,7 +117,6 @@ class TakeAStepInTheMaze(@Autowired val takeAStep: TakeAStep) : GraphQLMutationR
             StepDirectionRequest.DOWN -> StepDirection.DOWN
             StepDirectionRequest.LEFT -> StepDirection.LEFT
         }
-
 }
 
 private fun toPositionResponse(position: Position) = PositionResponse(position.x(), position.y())
@@ -123,7 +125,6 @@ typealias MazeId = UUID
 
 ////////////////////////
 // data transfer objects
-
 
 enum class StepDirectionRequest { UP, RIGHT, DOWN, LEFT }
 
@@ -135,6 +136,7 @@ sealed class CellResponse {
     data class Wall(override val position: PositionResponse) : CellResponse()
     data class Floor(override val position: PositionResponse) : CellResponse()
 }
+
 data class PositionResponse(private val x: Int, private val y: Int)
 sealed class StepResultResponse {
     data class MazeDoesNotExist(val message: String) : StepResultResponse()
@@ -146,20 +148,17 @@ sealed class StepResultResponse {
 // subscriptions
 
 @Component
-class SecondsSubscription : GraphQLSubscriptionResolver {
-    fun tellMeSeconds(): Publisher<Int> = MySecondsPublisher().publisher
+class MazesInfoSubscription(@Autowired val mazesPublisher: MyMazesPublisher) : GraphQLSubscriptionResolver {
+    fun allMazes(): Publisher<List<MazeInfoResponse>> = mazesPublisher.publisher
 }
 
 @Component
-class MySecondsPublisher {
-    final val publisher: Flowable<Int>
+class MyMazesPublisher {
+    final var emitter: ObservableEmitter<List<MazeInfoResponse>>? = null
+    final val publisher: Flowable<List<MazeInfoResponse>>
 
     init {
-        val myObservable = Observable.create<Int> { emitter ->
-            fixedRateTimer(initialDelay = 100, period = 100) {
-                emitter.onNext(DateTime.now().secondOfDay)
-            }
-        }
+        val myObservable = Observable.create<List<MazeInfoResponse>> { emitter -> this.emitter = emitter }
 
         val connectableObservable = myObservable.share().publish()
         connectableObservable.connect()
@@ -167,25 +166,3 @@ class MySecondsPublisher {
         publisher = connectableObservable.toFlowable(BackpressureStrategy.BUFFER)
     }
 }
-
-@Component
-class ChatSubscription(@Autowired val chatPublisher: MyChatPublisher) : GraphQLSubscriptionResolver {
-    fun tellMeWhatOthersSay(): Publisher<String> = chatPublisher.publisher
-}
-
-@Component
-class MyChatPublisher {
-    final var emitter: ObservableEmitter<String>? = null
-    final val publisher: Flowable<String>
-
-    init {
-        val myObservable = Observable.create<String> { emitter -> this.emitter = emitter }
-
-        val connectableObservable = myObservable.share().publish()
-        connectableObservable.connect()
-
-        publisher = connectableObservable.toFlowable(BackpressureStrategy.BUFFER)
-    }
-}
-
-

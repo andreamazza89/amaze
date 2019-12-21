@@ -17,7 +17,7 @@ type MazeInfo {
 }
 
 type Maze {
-    cells: [Cell]!
+    cells: [Cell!]!
 }
 
 union Cell = Wall | Floor

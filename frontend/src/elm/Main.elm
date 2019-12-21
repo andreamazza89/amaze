@@ -3,10 +3,13 @@ port module Main exposing (main)
 import Api.Enum.Direction
 import Api.Mutation
 import Api.Object
+import Api.Object.Maze
 import Api.Object.MazeInfo
 import Api.Object.Position
 import Api.Scalar exposing (Id)
 import Api.Subscription as Subscription
+import Api.Union
+import Api.Union.Cell
 import Browser
 import Graphql.Document
 import Graphql.Http
@@ -57,13 +60,24 @@ type StepDirection
 
 
 type alias MazeInfoInternal =
-    { position : PositionInternal }
+    { position : PositionInternal
+    , maze : MazeInternal
+    }
 
 
 type alias PositionInternal =
     { x : Int
     , y : Int
     }
+
+
+type alias MazeInternal =
+    { cells : List Foo }
+
+
+type Foo
+    = Wall
+    | Floor
 
 
 
@@ -92,6 +106,10 @@ update msg model =
         MazesInformationReceived mazeInfo ->
             case Decode.decodeValue mazeInfoDecoder mazeInfo of
                 Ok mazesInfo ->
+                    let
+                        _ =
+                            Debug.log "" mazesInfo
+                    in
                     ( { model | mazes = mazesInfo }, Cmd.none )
 
                 Err _ ->
@@ -153,6 +171,7 @@ mazeInfoSelection : SelectionSet MazeInfoInternal Api.Object.MazeInfo
 mazeInfoSelection =
     SelectionSet.succeed MazeInfoInternal
         |> with (Api.Object.MazeInfo.yourPosition positionSelection)
+        |> with (Api.Object.MazeInfo.maze mazeSelection)
 
 
 positionSelection : SelectionSet PositionInternal Api.Object.Position
@@ -160,6 +179,20 @@ positionSelection =
     SelectionSet.succeed PositionInternal
         |> with Api.Object.Position.x
         |> with Api.Object.Position.y
+
+
+mazeSelection : SelectionSet MazeInternal Api.Object.Maze
+mazeSelection =
+    SelectionSet.succeed MazeInternal
+        |> with (Api.Object.Maze.cells cellSelection)
+
+
+cellSelection : SelectionSet Foo Api.Union.Cell
+cellSelection =
+    Api.Union.Cell.fragments
+        { onWall = SelectionSet.succeed Wall
+        , onFloor = SelectionSet.succeed Floor
+        }
 
 
 

@@ -23,11 +23,11 @@ type Maze {
 union Cell = Wall | Floor
 
 type Wall {
-    position: Position
+    position: Position!
 }
 
 type Floor {
-    position: Position
+    position: Position!
 }
 
 type Position {

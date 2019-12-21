@@ -3,9 +3,11 @@ port module Main exposing (main)
 import Api.Enum.Direction
 import Api.Mutation
 import Api.Object
+import Api.Object.Floor
 import Api.Object.Maze
 import Api.Object.MazeInfo
 import Api.Object.Position
+import Api.Object.Wall
 import Api.Scalar exposing (Id)
 import Api.Subscription as Subscription
 import Api.Union
@@ -15,7 +17,7 @@ import Graphql.Document
 import Graphql.Http
 import Graphql.Operation exposing (RootSubscription)
 import Graphql.SelectionSet as SelectionSet exposing (SelectionSet(..), with)
-import Html exposing (Html, button, div, input, p, text)
+import Html exposing (Html, button, div, input, text)
 import Html.Events exposing (onClick, onInput)
 import Json.Decode as Decode
 
@@ -72,12 +74,22 @@ type alias PositionInternal =
 
 
 type alias MazeInternal =
-    { cells : List Foo }
+    { cells : List CellInternal }
 
 
-type Foo
-    = Wall
-    | Floor
+type CellInternal
+    = Wall PositionInternal
+    | Floor PositionInternal
+
+
+getY : CellInternal -> Int
+getY cell =
+    case cell of
+        Wall position ->
+            position.y
+
+        Floor position ->
+            position.y
 
 
 
@@ -187,12 +199,24 @@ mazeSelection =
         |> with (Api.Object.Maze.cells cellSelection)
 
 
-cellSelection : SelectionSet Foo Api.Union.Cell
+cellSelection : SelectionSet CellInternal Api.Union.Cell
 cellSelection =
     Api.Union.Cell.fragments
-        { onWall = SelectionSet.succeed Wall
-        , onFloor = SelectionSet.succeed Floor
+        { onWall = wallSelection
+        , onFloor = floorSelection
         }
+
+
+wallSelection : SelectionSet CellInternal Api.Object.Wall
+wallSelection =
+    SelectionSet.succeed Wall
+        |> with (Api.Object.Wall.position positionSelection)
+
+
+floorSelection : SelectionSet CellInternal Api.Object.Floor
+floorSelection =
+    SelectionSet.succeed Floor
+        |> with (Api.Object.Floor.position positionSelection)
 
 
 
@@ -230,7 +254,46 @@ view model =
 
 viewMazeInfo : MazeInfoInternal -> Html msg
 viewMazeInfo info =
-    p [] [ text <| "this is one maze; current x: " ++ String.fromInt info.position.x ++ ", y: " ++ String.fromInt info.position.y ]
+    div []
+        [ text <| "this is one maze; current x: " ++ String.fromInt info.position.x ++ ", y: " ++ String.fromInt info.position.y
+        , viewMaze <| makeRows info.maze.cells []
+        ]
+
+
+makeRows : List CellInternal -> List (List CellInternal) -> List (List CellInternal)
+makeRows allCells cellsIntoRows =
+    if List.isEmpty allCells then
+        cellsIntoRows
+
+    else
+        let
+            nextRow =
+                List.filter (\c -> getY c == getY (Maybe.withDefault (Floor (PositionInternal 2 3)) (List.head allCells))) allCells
+
+            remainingCells =
+                List.filter (\c -> getY c /= getY (Maybe.withDefault (Floor (PositionInternal 2 3)) (List.head allCells))) allCells
+        in
+        makeRows remainingCells (cellsIntoRows ++ [ nextRow ])
+
+
+viewMaze : List (List CellInternal) -> Html msg
+viewMaze rows =
+    div [] <| List.map (\row -> viewRow row) rows
+
+
+viewRow : List CellInternal -> Html msg
+viewRow row =
+    div [] <| List.map (\cell -> viewCell cell) row
+
+
+viewCell : CellInternal -> Html msg
+viewCell cell =
+    case cell of
+        Wall _ ->
+            text "x"
+
+        Floor _ ->
+            text "o"
 
 
 controlAMaze : Html Msg

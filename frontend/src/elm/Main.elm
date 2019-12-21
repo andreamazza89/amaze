@@ -13,6 +13,7 @@ import Api.Subscription as Subscription
 import Api.Union
 import Api.Union.Cell
 import Browser
+import Element
 import Graphql.Document
 import Graphql.Http
 import Graphql.Operation exposing (RootSubscription)
@@ -245,6 +246,7 @@ view model =
         [ controlAMaze
         , button [ onClick SubscribeToMazeUpdates ] [ text "subscribe to maze updates" ]
         , div [] <| List.map viewMazeInfo model.mazes
+        , Element.layout [] <| Element.text "HIII"
         ]
 
 

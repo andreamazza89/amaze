@@ -1,15 +1,19 @@
 port module Main exposing (main)
 
+import Api.Enum.Direction
+import Api.Mutation
 import Api.Object
 import Api.Object.MazeInfo
 import Api.Object.Position
+import Api.Scalar exposing (Id)
 import Api.Subscription as Subscription
 import Browser
 import Graphql.Document
+import Graphql.Http
 import Graphql.Operation exposing (RootSubscription)
 import Graphql.SelectionSet as SelectionSet exposing (SelectionSet(..), with)
-import Html exposing (Html, button, div, p, text)
-import Html.Events exposing (onClick)
+import Html exposing (Html, button, div, input, p, text)
+import Html.Events exposing (onClick, onInput)
 import Json.Decode as Decode
 
 
@@ -33,12 +37,23 @@ main =
 
 type alias Model =
     { mazes : List MazeInfoInternal
+    , controllingMazeId : String
     }
 
 
 type Msg
     = MazesInformationReceived Decode.Value
     | SubscribeToMazeUpdates
+    | MazeIdTyped String
+    | MoveRunnerClicked StepDirection
+    | TakeAStepResponseReceived
+
+
+type StepDirection
+    = UP
+    | DOWN
+    | LEFT
+    | RIGHT
 
 
 type alias MazeInfoInternal =
@@ -63,6 +78,7 @@ init _ =
 initialModel : Model
 initialModel =
     { mazes = []
+    , controllingMazeId = ""
     }
 
 
@@ -83,6 +99,44 @@ update msg model =
 
         SubscribeToMazeUpdates ->
             ( model, subscribeToMazesUpdates )
+
+        MazeIdTyped mazeId ->
+            ( { model | controllingMazeId = mazeId }, Cmd.none )
+
+        MoveRunnerClicked stepDirection ->
+            ( model, takeAStep model.controllingMazeId stepDirection )
+
+        TakeAStepResponseReceived ->
+            ( model, subscribeToMazesUpdates )
+
+
+takeAStep : String -> StepDirection -> Cmd Msg
+takeAStep mazeId stepDirection =
+    Graphql.Http.mutationRequest
+        "http://localhost:8080/graphql"
+        (Api.Mutation.takeAStep { mazeId = toApiMazeId mazeId, stepDirection = toApiStep stepDirection } (SelectionSet.succeed ()))
+        |> Graphql.Http.send (always TakeAStepResponseReceived)
+
+
+toApiMazeId : String -> Id
+toApiMazeId id =
+    Api.Scalar.Id id
+
+
+toApiStep : StepDirection -> Api.Enum.Direction.Direction
+toApiStep step =
+    case step of
+        UP ->
+            Api.Enum.Direction.Up
+
+        DOWN ->
+            Api.Enum.Direction.Down
+
+        LEFT ->
+            Api.Enum.Direction.Left
+
+        RIGHT ->
+            Api.Enum.Direction.Right
 
 
 mazeInfoDecoder : Decode.Decoder (List MazeInfoInternal)
@@ -135,7 +189,8 @@ port mazeUpdates : String -> Cmd msg
 view : Model -> Html Msg
 view model =
     div []
-        [ button [ onClick SubscribeToMazeUpdates ] [ text "subscribe to maze updates" ]
+        [ controlAMaze
+        , button [ onClick SubscribeToMazeUpdates ] [ text "subscribe to maze updates" ]
         , div [] <| List.map viewMazeInfo model.mazes
         ]
 
@@ -143,3 +198,14 @@ view model =
 viewMazeInfo : MazeInfoInternal -> Html msg
 viewMazeInfo info =
     p [] [ text <| "this is one maze; current x: " ++ String.fromInt info.position.x ++ ", y: " ++ String.fromInt info.position.y ]
+
+
+controlAMaze : Html Msg
+controlAMaze =
+    div []
+        [ input [ onInput MazeIdTyped ] []
+        , button [ onClick <| MoveRunnerClicked UP ] [ text "UP" ]
+        , button [ onClick <| MoveRunnerClicked DOWN ] [ text "DOWN" ]
+        , button [ onClick <| MoveRunnerClicked LEFT ] [ text "LEFT" ]
+        , button [ onClick <| MoveRunnerClicked RIGHT ] [ text "RIGHT" ]
+        ]

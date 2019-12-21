@@ -6,9 +6,6 @@ export namespace Elm {
   namespace Main {
     export interface App {
       ports: {
-        tellMeSeconds: {
-          subscribe(callback: (data: string) => void): void
-        }
         mazesInformationReceived: {
           send(data: any): void
         }

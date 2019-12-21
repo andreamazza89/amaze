@@ -1,10 +1,13 @@
 package com.andreamazzarella.amaze
 
 import com.andreamazzarella.amaze.core.Floor
-import com.andreamazzarella.amaze.core.StepError
 import com.andreamazzarella.amaze.core.Maze
 import com.andreamazzarella.amaze.core.Position
-import com.andreamazzarella.amaze.core.StepDirection
+import com.andreamazzarella.amaze.core.StepDirection.DOWN
+import com.andreamazzarella.amaze.core.StepDirection.LEFT
+import com.andreamazzarella.amaze.core.StepDirection.RIGHT
+import com.andreamazzarella.amaze.core.StepDirection.UP
+import com.andreamazzarella.amaze.core.StepError
 import com.andreamazzarella.amaze.core.Wall
 import com.andreamazzarella.amaze.core.aMazeFromADrawing
 import com.andreamazzarella.amaze.utils.Err
@@ -53,7 +56,7 @@ class MazeTest {
             """.trimIndent()
         )
 
-        val stepResult = maze.takeAStep(StepDirection.UP)
+        val stepResult = maze.takeAStep(UP)
 
 
         assertOkEquals(pos(0,1), stepResult)
@@ -69,7 +72,7 @@ class MazeTest {
             """.trimIndent()
         )
 
-        val stepResult = maze.takeAStep(StepDirection.DOWN)
+        val stepResult = maze.takeAStep(DOWN)
 
 
         assertOkEquals(pos(1,1), stepResult)
@@ -85,7 +88,7 @@ class MazeTest {
             """.trimIndent()
         )
 
-        val stepResult = maze.takeAStep(StepDirection.RIGHT)
+        val stepResult = maze.takeAStep(RIGHT)
 
 
         assertOkEquals(pos(1,2), stepResult)
@@ -101,7 +104,7 @@ class MazeTest {
             """.trimIndent()
         )
 
-        val stepResult = maze.takeAStep(StepDirection.LEFT)
+        val stepResult = maze.takeAStep(LEFT)
 
 
         assertOkEquals(pos(1,1), stepResult)
@@ -117,7 +120,7 @@ class MazeTest {
             """.trimIndent()
         )
 
-        val stepResult = maze.takeAStep(StepDirection.DOWN)
+        val stepResult = maze.takeAStep(DOWN)
 
         assertIsError(StepError(), stepResult)
     }
@@ -132,7 +135,7 @@ class MazeTest {
             """.trimIndent()
         )
 
-        val stepResult = maze.takeAStep(StepDirection.UP)
+        val stepResult = maze.takeAStep(UP)
 
         assertIsError(StepError("you walked out of the maze"), stepResult)
     }
@@ -145,7 +148,8 @@ class MazeTest {
         when (result) {
             is Ok -> assertEquals(result.okValue, expected)
             is Err -> Assertions.fail("Expected result to be ok, but was an error")
-        } }
+        }
+    }
 
     private fun <O, E> assertIsError(expected: E, result: Result<O, E>) {
         when (result) {

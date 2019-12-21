@@ -62,7 +62,7 @@ type StepDirection
 
 
 type alias MazeInfoInternal =
-    { position : PositionInternal
+    { runnerPosition : PositionInternal
     , maze : MazeInternal
     }
 
@@ -118,10 +118,6 @@ update msg model =
         MazesInformationReceived mazeInfo ->
             case Decode.decodeValue mazeInfoDecoder mazeInfo of
                 Ok mazesInfo ->
-                    let
-                        _ =
-                            Debug.log "" mazesInfo
-                    in
                     ( { model | mazes = mazesInfo }, Cmd.none )
 
                 Err _ ->
@@ -255,8 +251,8 @@ view model =
 viewMazeInfo : MazeInfoInternal -> Html msg
 viewMazeInfo info =
     div []
-        [ text <| "this is one maze; current x: " ++ String.fromInt info.position.x ++ ", y: " ++ String.fromInt info.position.y
-        , viewMaze <| makeRows info.maze.cells []
+        [ text <| "this is one maze; current x: " ++ String.fromInt info.runnerPosition.x ++ ", y: " ++ String.fromInt info.runnerPosition.y
+        , viewMaze info.runnerPosition <| makeRows info.maze.cells []
         ]
 
 
@@ -276,24 +272,28 @@ makeRows allCells cellsIntoRows =
         makeRows remainingCells (cellsIntoRows ++ [ nextRow ])
 
 
-viewMaze : List (List CellInternal) -> Html msg
-viewMaze rows =
-    div [] <| List.map (\row -> viewRow row) rows
+viewMaze : PositionInternal -> List (List CellInternal) -> Html msg
+viewMaze runnerPosition rows =
+    div [] <| List.map (viewRow runnerPosition) rows
 
 
-viewRow : List CellInternal -> Html msg
-viewRow row =
-    div [] <| List.map (\cell -> viewCell cell) row
+viewRow : PositionInternal -> List CellInternal -> Html msg
+viewRow runnerPosition row =
+    div [] <| List.map (viewCell runnerPosition) row
 
 
-viewCell : CellInternal -> Html msg
-viewCell cell =
+viewCell : PositionInternal -> CellInternal -> Html msg
+viewCell runnerPosition cell =
     case cell of
         Wall _ ->
             text "x"
 
-        Floor _ ->
-            text "o"
+        Floor position ->
+            if runnerPosition == position then
+                text "_"
+
+            else
+                text "o"
 
 
 controlAMaze : Html Msg

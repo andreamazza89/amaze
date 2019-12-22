@@ -245,9 +245,39 @@ view model =
     div []
         [ controlAMaze
         , button [ onClick SubscribeToMazeUpdates ] [ text "subscribe to maze updates" ]
-        , div [] <| List.map viewMazeInfo model.mazes
-        , Element.layout [] <| Element.text "HIII"
+        , Element.layout [] <| view_ model
         ]
+
+
+view_ : Model -> Element.Element msg
+view_ model =
+    Element.row [ Element.padding 55, Element.spacing 20 ] <| List.map viewMaze2 model.mazes
+
+
+viewMaze2 : MazeInfoInternal -> Element.Element msg
+viewMaze2 mazeInfo =
+    makeRows mazeInfo.maze.cells []
+        |> List.map (viewRow2 mazeInfo.runnerPosition)
+        |> Element.column []
+
+
+viewRow2 : PositionInternal -> List CellInternal -> Element.Element msg
+viewRow2 runnerPosition row =
+    Element.row [] <| List.map (viewCell2 runnerPosition) row
+
+
+viewCell2 : PositionInternal -> CellInternal -> Element.Element msg
+viewCell2 runnerPosition cell =
+    case cell of
+        Wall _ ->
+            Element.text "x"
+
+        Floor position ->
+            if runnerPosition == position then
+                Element.text "_"
+
+            else
+                Element.text "o"
 
 
 viewMazeInfo : MazeInfoInternal -> Html msg

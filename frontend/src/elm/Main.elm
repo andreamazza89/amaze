@@ -14,6 +14,8 @@ import Api.Union
 import Api.Union.Cell
 import Browser
 import Element
+import Element.Background
+import Element.Border
 import Graphql.Document
 import Graphql.Http
 import Graphql.Operation exposing (RootSubscription)
@@ -84,8 +86,8 @@ type CellInternal
 
 
 getY : CellInternal -> Int
-getY cell =
-    case cell of
+getY cell_ =
+    case cell_ of
         Wall position ->
             position.y
 
@@ -267,25 +269,46 @@ viewRow2 runnerPosition row =
 
 
 viewCell2 : PositionInternal -> CellInternal -> Element.Element msg
-viewCell2 runnerPosition cell =
-    case cell of
+viewCell2 runnerPosition cell_ =
+    case cell_ of
         Wall _ ->
-            Element.text "x"
+            darkCell
 
         Floor position ->
             if runnerPosition == position then
-                Element.text "_"
+                runnerCell
 
             else
-                Element.text "o"
+                lightCell
 
 
-viewMazeInfo : MazeInfoInternal -> Html msg
-viewMazeInfo info =
-    div []
-        [ text <| "this is one maze; current x: " ++ String.fromInt info.runnerPosition.x ++ ", y: " ++ String.fromInt info.runnerPosition.y
-        , viewMaze info.runnerPosition <| makeRows info.maze.cells []
+darkCell : Element.Element msg
+darkCell =
+    cell [ Element.Background.color <| Element.rgb255 0 0 0 ]
+
+
+lightCell : Element.Element msg
+lightCell =
+    cell [ Element.Background.color <| Element.rgb255 255 255 255 ]
+
+
+runnerCell : Element.Element msg
+runnerCell =
+    cell
+        [ Element.Background.color <| Element.rgb255 51 204 51
+        , Element.Border.rounded 200
         ]
+
+
+cell : List (Element.Attribute msg) -> Element.Element msg
+cell attributes =
+    Element.el
+        ([ Element.width (Element.fill |> Element.minimum 25)
+         , Element.height (Element.fill |> Element.minimum 25)
+         ]
+            ++ attributes
+        )
+        Element.none
 
 
 makeRows : List CellInternal -> List (List CellInternal) -> List (List CellInternal)
@@ -302,30 +325,6 @@ makeRows allCells cellsIntoRows =
                 List.filter (\c -> getY c /= getY (Maybe.withDefault (Floor (PositionInternal 2 3)) (List.head allCells))) allCells
         in
         makeRows remainingCells (cellsIntoRows ++ [ nextRow ])
-
-
-viewMaze : PositionInternal -> List (List CellInternal) -> Html msg
-viewMaze runnerPosition rows =
-    div [] <| List.map (viewRow runnerPosition) rows
-
-
-viewRow : PositionInternal -> List CellInternal -> Html msg
-viewRow runnerPosition row =
-    div [] <| List.map (viewCell runnerPosition) row
-
-
-viewCell : PositionInternal -> CellInternal -> Html msg
-viewCell runnerPosition cell =
-    case cell of
-        Wall _ ->
-            text "x"
-
-        Floor position ->
-            if runnerPosition == position then
-                text "_"
-
-            else
-                text "o"
 
 
 controlAMaze : Html Msg

@@ -27,6 +27,26 @@ import Json.Decode as Decode
 
 
 
+-- Webdata
+
+
+type Webdata data
+    = Loading
+    | Failed
+    | Success data
+
+
+fromResult : Result error data -> Webdata data
+fromResult result =
+    case result of
+        Ok data ->
+            Success data
+
+        Err _ ->
+            Failed
+
+
+
 -- Program
 
 
@@ -61,20 +81,8 @@ type Msg
     | StartAGameResponseReceived (Webdata Api.Scalar.Id)
 
 
-type Webdata data
-    = Loading
-    | Failed
-    | Success data
 
-
-fromResult : Result error data -> Webdata data
-fromResult result =
-    case result of
-        Ok data ->
-            Success data
-
-        Err _ ->
-            Failed
+-- Maze decoding things
 
 
 type StepDirection
@@ -143,13 +151,8 @@ initialModel =
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        MazesInformationReceived mazeInfo ->
-            case Decode.decodeValue mazeInfoDecoder mazeInfo of
-                Ok mazesInfo ->
-                    ( { model | mazes = mazesInfo }, Cmd.none )
-
-                Err _ ->
-                    ( model, Cmd.none )
+        MazesInformationReceived mazesInfo ->
+            decodeMazesInfo mazesInfo model
 
         SubscribeToMazeUpdates ->
             ( model, subscribeToMazesUpdates )
@@ -168,6 +171,16 @@ update msg model =
 
         StartAGameResponseReceived response ->
             ( { model | gameId = Just response }, Cmd.none )
+
+
+decodeMazesInfo : Decode.Value -> Model -> ( Model, Cmd msg )
+decodeMazesInfo mazesInfo model =
+    case Decode.decodeValue mazeInfoDecoder mazesInfo of
+        Ok mazes_ ->
+            ( { model | mazes = mazes_ }, Cmd.none )
+
+        Err _ ->
+            ( model, Cmd.none )
 
 
 startAGame : Cmd Msg
@@ -295,7 +308,15 @@ startAGame_ : Model -> Element.Element Msg
 startAGame_ model =
     case model.gameId of
         Just gameId ->
-            Element.text "you got game or you're building one"
+            case gameId of
+                Loading ->
+                    Element.text "creating a game ..."
+
+                Failed ->
+                    Element.text "failed to create a game - please refresh the page and try again"
+
+                Success (Api.Scalar.Id id) ->
+                    Element.text <| "GAME ID: " ++ id
 
         Nothing ->
             Element.Input.button []

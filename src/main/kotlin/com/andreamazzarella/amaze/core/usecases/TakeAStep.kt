@@ -1,5 +1,9 @@
-package com.andreamazzarella.amaze.core
+package com.andreamazzarella.amaze.core.usecases
 
+import com.andreamazzarella.amaze.core.Maze
+import com.andreamazzarella.amaze.core.MazeId
+import com.andreamazzarella.amaze.core.Position
+import com.andreamazzarella.amaze.core.StepDirection
 import com.andreamazzarella.amaze.persistence.MazeRepository
 import com.andreamazzarella.amaze.utils.Result
 import com.andreamazzarella.amaze.utils.andThen
@@ -13,7 +17,13 @@ class TakeAStep(@Autowired private val mazeRepository: MazeRepository) {
     fun doIt(mazeId: MazeId, stepDirection: StepDirection): Result<Position, TakeAStepError> {
         return findAMaze(mazeRepository, mazeId)
             .andThen { maze -> takeAStep(maze, stepDirection) }
-            .andThen { newPosition -> updatePosition(mazeRepository, mazeId, newPosition) }
+            .andThen { newPosition ->
+                updatePosition(
+                    mazeRepository,
+                    mazeId,
+                    newPosition
+                )
+            }
     }
 }
 
@@ -28,7 +38,11 @@ private fun updatePosition(
     mazeId: MazeId,
     newPosition: Position
 ): Result<Position, TakeAStepError> =
-    mazeRepository.updatePosition(mazeId, newPosition).mapError { TakeAStepError(MazeNotFound) }
+    mazeRepository.updatePosition(mazeId, newPosition).mapError {
+        TakeAStepError(
+            MazeNotFound
+        )
+    }
 
 data class TakeAStepError(val error: PotentialStepError)
 sealed class PotentialStepError

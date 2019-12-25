@@ -1,17 +1,18 @@
 package com.andreamazzarella.amaze.graphqlstuff
 
 import com.andreamazzarella.amaze.core.Floor
-import com.andreamazzarella.amaze.core.GetAMaze
-import com.andreamazzarella.amaze.core.HitAWall
-import com.andreamazzarella.amaze.core.MakeAMaze
+import com.andreamazzarella.amaze.core.usecases.GetAMaze
+import com.andreamazzarella.amaze.core.usecases.HitAWall
+import com.andreamazzarella.amaze.core.usecases.MakeAMaze
 import com.andreamazzarella.amaze.core.Maze
-import com.andreamazzarella.amaze.core.MazeNotFound
+import com.andreamazzarella.amaze.core.usecases.MazeNotFound
 import com.andreamazzarella.amaze.core.OutsideMaze
 import com.andreamazzarella.amaze.core.Position
 import com.andreamazzarella.amaze.core.StepDirection
-import com.andreamazzarella.amaze.core.TakeAStep
-import com.andreamazzarella.amaze.core.TakeAStepError
+import com.andreamazzarella.amaze.core.usecases.TakeAStep
+import com.andreamazzarella.amaze.core.usecases.TakeAStepError
 import com.andreamazzarella.amaze.core.Wall
+import com.andreamazzarella.amaze.core.usecases.StartAGame
 import com.andreamazzarella.amaze.persistence.MazeNotFoundError
 import com.andreamazzarella.amaze.persistence.MazeRepository
 import com.andreamazzarella.amaze.utils.Err
@@ -78,6 +79,13 @@ private fun toCellsResponse(maze: Maze): List<CellResponse> =
             is OutsideMaze -> TODO()
         }
     }
+
+@Component
+class StartAGameResolver() : GraphQLMutationResolver {
+    fun startAGame(): GameId = StartAGame.doIt()
+}
+
+typealias GameId = String
 
 @Component
 class CreateAMaze(@Autowired val makeAMaze: MakeAMaze) : GraphQLMutationResolver {

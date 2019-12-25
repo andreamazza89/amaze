@@ -3,6 +3,7 @@ type Query {
 }
 
 type Mutation {
+    startAGame: ID!
     createAMaze(mazeRunner: String!): ID!
     takeAStep(mazeId: ID!, stepDirection: Direction!): StepResult!
 }

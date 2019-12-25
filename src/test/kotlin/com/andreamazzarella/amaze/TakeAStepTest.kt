@@ -1,13 +1,13 @@
 package com.andreamazzarella.amaze
 
-import com.andreamazzarella.amaze.core.GetAMaze
-import com.andreamazzarella.amaze.core.HitAWall
-import com.andreamazzarella.amaze.core.MakeAMaze
-import com.andreamazzarella.amaze.core.MazeNotFound
+import com.andreamazzarella.amaze.core.usecases.GetAMaze
+import com.andreamazzarella.amaze.core.usecases.HitAWall
+import com.andreamazzarella.amaze.core.usecases.MakeAMaze
+import com.andreamazzarella.amaze.core.usecases.MazeNotFound
 import com.andreamazzarella.amaze.core.Position
 import com.andreamazzarella.amaze.core.StepDirection
-import com.andreamazzarella.amaze.core.TakeAStepError
-import com.andreamazzarella.amaze.core.TakeAStep
+import com.andreamazzarella.amaze.core.usecases.TakeAStepError
+import com.andreamazzarella.amaze.core.usecases.TakeAStep
 import com.andreamazzarella.amaze.persistence.MazeRepository
 import com.andreamazzarella.amaze.utils.Err
 import com.andreamazzarella.amaze.utils.Ok

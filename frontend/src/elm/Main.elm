@@ -16,8 +16,9 @@ import Browser
 import Element
 import Element.Background
 import Element.Border
+import Element.Input
 import Graphql.Document
-import Graphql.Http
+import Graphql.Http exposing (Error)
 import Graphql.Operation exposing (RootSubscription)
 import Graphql.SelectionSet as SelectionSet exposing (SelectionSet(..), with)
 import Html exposing (Html, button, div, input, text)
@@ -46,6 +47,7 @@ main =
 type alias Model =
     { mazes : List MazeInfoInternal
     , controllingMazeId : String
+    , gameId : Maybe (Webdata Api.Scalar.Id)
     }
 
 
@@ -55,6 +57,24 @@ type Msg
     | MazeIdTyped String
     | MoveRunnerClicked StepDirection
     | TakeAStepResponseReceived
+    | StartAGameClicked
+    | StartAGameResponseReceived (Webdata Api.Scalar.Id)
+
+
+type Webdata data
+    = Loading
+    | Failed
+    | Success data
+
+
+fromResult : Result error data -> Webdata data
+fromResult result =
+    case result of
+        Ok data ->
+            Success data
+
+        Err _ ->
+            Failed
 
 
 type StepDirection
@@ -78,6 +98,10 @@ type alias PositionInternal =
 
 type alias MazeInternal =
     { cells : List CellInternal }
+
+
+type alias GameId =
+    String
 
 
 type CellInternal
@@ -108,6 +132,7 @@ initialModel : Model
 initialModel =
     { mazes = []
     , controllingMazeId = ""
+    , gameId = Nothing
     }
 
 
@@ -137,6 +162,20 @@ update msg model =
 
         TakeAStepResponseReceived ->
             ( model, subscribeToMazesUpdates )
+
+        StartAGameClicked ->
+            ( model, startAGame )
+
+        StartAGameResponseReceived response ->
+            ( { model | gameId = Just response }, Cmd.none )
+
+
+startAGame : Cmd Msg
+startAGame =
+    Graphql.Http.mutationRequest
+        "http://localhost:8080/graphql"
+        Api.Mutation.startAGame
+        |> Graphql.Http.send (fromResult >> StartAGameResponseReceived)
 
 
 takeAStep : String -> StepDirection -> Cmd Msg
@@ -247,8 +286,22 @@ view model =
     div []
         [ controlAMaze
         , button [ onClick SubscribeToMazeUpdates ] [ text "subscribe to maze updates" ]
+        , Element.layout [] <| startAGame_ model
         , Element.layout [] <| view_ model
         ]
+
+
+startAGame_ : Model -> Element.Element Msg
+startAGame_ model =
+    case model.gameId of
+        Just gameId ->
+            Element.text "you got game or you're building one"
+
+        Nothing ->
+            Element.Input.button []
+                { onPress = Just StartAGameClicked
+                , label = Element.text "start a game"
+                }
 
 
 view_ : Model -> Element.Element msg

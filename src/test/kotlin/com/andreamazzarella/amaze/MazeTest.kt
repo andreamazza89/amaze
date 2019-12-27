@@ -1,5 +1,7 @@
 package com.andreamazzarella.amaze
 
+import assertIsError
+import assertOkEquals
 import com.andreamazzarella.amaze.core.Floor
 import com.andreamazzarella.amaze.core.Maze
 import com.andreamazzarella.amaze.core.Position
@@ -10,10 +12,6 @@ import com.andreamazzarella.amaze.core.StepDirection.UP
 import com.andreamazzarella.amaze.core.StepError
 import com.andreamazzarella.amaze.core.Wall
 import com.andreamazzarella.amaze.core.aMazeFromADrawing
-import com.andreamazzarella.amaze.utils.Err
-import com.andreamazzarella.amaze.utils.Ok
-import com.andreamazzarella.amaze.utils.Result
-import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import java.util.UUID
@@ -143,18 +141,4 @@ class MazeTest {
 
 
     private fun pos(row: Int, column: Int) = Position(Position.Row(row), Position.Column(column))
-
-    private fun <O, E> assertOkEquals(expected: O, result: Result<O, E>) {
-        when (result) {
-            is Ok -> assertEquals(result.okValue, expected)
-            is Err -> Assertions.fail("Expected result to be ok, but was an error")
-        }
-    }
-
-    private fun <O, E> assertIsError(expected: E, result: Result<O, E>) {
-        when (result) {
-            is Ok -> Assertions.fail("Expected result to be an error, but was ok")
-            is Err -> assertEquals(expected, result.errorValue)
-        }
-    }
 }

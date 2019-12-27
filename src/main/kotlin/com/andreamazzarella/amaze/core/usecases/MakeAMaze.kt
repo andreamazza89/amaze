@@ -1,8 +1,13 @@
 package com.andreamazzarella.amaze.core.usecases
 
+import com.andreamazzarella.amaze.core.GameId
 import com.andreamazzarella.amaze.core.MazeId
 import com.andreamazzarella.amaze.core.aMazeFromADrawing
+import com.andreamazzarella.amaze.persistence.GameRepository
 import com.andreamazzarella.amaze.persistence.MazeRepository
+import com.andreamazzarella.amaze.utils.Err
+import com.andreamazzarella.amaze.utils.Ok
+import com.andreamazzarella.amaze.utils.Result
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
 import java.util.UUID
@@ -15,6 +20,16 @@ class MakeAMaze(@Autowired private val mazeRepository: MazeRepository) {
         return mazeId
     }
 
+    fun doIt2(
+        gameId: GameId,
+        mazeDrawing: String = defaultMaze()
+    ): Result<MazeId, GameDoesNotExist> {
+        return when (GameRepository.find(gameId)) {
+            is Ok -> Ok(UUID.randomUUID())
+            is Err -> Err(GameDoesNotExist)
+        }
+    }
+
     private fun defaultMaze() =
         """
             ⬛⚪⬛⬛⬛
@@ -22,3 +37,5 @@ class MakeAMaze(@Autowired private val mazeRepository: MazeRepository) {
             ⬛⬛⬛⬛⬛
         """.trimIndent()
 }
+
+object GameDoesNotExist

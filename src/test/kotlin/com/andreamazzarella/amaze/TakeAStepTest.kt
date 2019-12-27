@@ -1,20 +1,18 @@
 package com.andreamazzarella.amaze
 
+import assertIsError
+import assertOkEquals
+import com.andreamazzarella.amaze.core.Position
+import com.andreamazzarella.amaze.core.StepDirection
 import com.andreamazzarella.amaze.core.usecases.GetAMaze
 import com.andreamazzarella.amaze.core.usecases.HitAWall
 import com.andreamazzarella.amaze.core.usecases.MakeAMaze
 import com.andreamazzarella.amaze.core.usecases.MazeNotFound
-import com.andreamazzarella.amaze.core.Position
-import com.andreamazzarella.amaze.core.StepDirection
-import com.andreamazzarella.amaze.core.usecases.TakeAStepError
 import com.andreamazzarella.amaze.core.usecases.TakeAStep
+import com.andreamazzarella.amaze.core.usecases.TakeAStepError
 import com.andreamazzarella.amaze.persistence.MazeRepository
-import com.andreamazzarella.amaze.utils.Err
-import com.andreamazzarella.amaze.utils.Ok
-import com.andreamazzarella.amaze.utils.Result
 import com.andreamazzarella.amaze.utils.okOrFail
 import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.fail
 import org.junit.jupiter.api.Test
 import java.util.UUID
 
@@ -97,16 +95,3 @@ class TakeAStepTest {
 
 }
 
-private fun <O, E> assertOkEquals(expected: O, result: Result<O, E>) {
-    when (result) {
-        is Ok -> assertEquals(result.okValue, expected)
-        is Err -> fail("Expected result to be ok, but was an error")
-    }
-}
-
-private fun <O, E> assertIsError(expected: E, result: Result<O, E>) {
-    when (result) {
-        is Ok -> fail("Expected result to be an error, but was ok")
-        is Err -> assertEquals(expected, result.errorValue)
-    }
-}

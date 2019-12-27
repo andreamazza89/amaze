@@ -1,6 +1,6 @@
 package com.andreamazzarella.amaze.core
 
-class Game {
+data class Game(val mazes: List<Maze> = emptyList()) {
     fun id() = generateGameId()
 }
 

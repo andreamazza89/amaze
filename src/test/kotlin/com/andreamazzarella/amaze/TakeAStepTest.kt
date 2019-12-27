@@ -92,6 +92,5 @@ class TakeAStepTest {
         val expectedPosition = Position(Position.Row(0), Position.Column(1))
         assertEquals(expectedPosition, updatedMaze.okOrFail().currentPosition)
     }
-
 }
 

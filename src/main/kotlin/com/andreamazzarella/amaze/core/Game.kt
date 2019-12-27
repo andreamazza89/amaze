@@ -1,12 +1,14 @@
 package com.andreamazzarella.amaze.core
 
-data class Game(val mazes: List<Maze> = emptyList()) {
-    fun id() = generateGameId()
+data class Game(val id: GameId, val mazes: List<Maze> = emptyList()) {
+    fun withMaze(maze: Maze) = this.copy(mazes = mazes + maze)
+
+    fun updateMaze(maze: Maze) = this.copy(mazes = mazes.filter { it.id != maze.id } + maze)
 }
 
 typealias GameId = String
 
-private fun generateGameId(): String =
+fun generateGameId(): String =
     listOf(
         RandomCharacter.NUMBER,
         RandomCharacter.NUMBER,

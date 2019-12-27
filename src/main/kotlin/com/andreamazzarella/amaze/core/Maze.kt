@@ -8,7 +8,7 @@ import java.util.UUID
 typealias MazeId = UUID
 
 data class Maze(
-    private val id: MazeId,
+    val id: MazeId,
     val cells: List<Cell>,
     val currentPosition: Position,
     private val exit: Position
@@ -19,6 +19,15 @@ data class Maze(
         return when (cellAt(newPosition)) {
             is Wall -> Err(StepError())
             is Floor -> Ok(newPosition)
+            is OutsideMaze -> Err(StepError("you walked out of the maze"))
+        }
+    }
+
+    fun takeAStep2(direction: StepDirection): Result<Maze, StepError> {
+        val newPosition = this.currentPosition.nearby(direction)
+        return when (cellAt(newPosition)) {
+            is Wall -> Err(StepError())
+            is Floor -> Ok(this.withPosition(newPosition))
             is OutsideMaze -> Err(StepError("you walked out of the maze"))
         }
     }

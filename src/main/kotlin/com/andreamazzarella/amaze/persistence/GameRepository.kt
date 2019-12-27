@@ -2,10 +2,11 @@ package com.andreamazzarella.amaze.persistence
 
 import com.andreamazzarella.amaze.core.Game
 import com.andreamazzarella.amaze.core.GameId
+import com.andreamazzarella.amaze.core.MazeId
 import com.andreamazzarella.amaze.utils.Err
 import com.andreamazzarella.amaze.utils.Ok
-import com.andreamazzarella.amaze.utils.pipe
 import com.andreamazzarella.amaze.utils.Result
+import com.andreamazzarella.amaze.utils.pipe
 
 object GameRepository {
     private val games: MutableMap<GameId, Game> = mutableMapOf()
@@ -16,7 +17,7 @@ object GameRepository {
 
 
     private fun persist(gameId: GameId): GameId {
-        games[gameId] = Game()
+        games[gameId] = Game(generateGameId())
         return gameId
     }
 
@@ -26,6 +27,15 @@ object GameRepository {
         } else {
             Err(GameNotFoundError)
         }
+    }
+
+    fun updateGame(game: Game): Result<Unit, GameNotFoundError> {
+        games[game.id] = game
+        return Ok(Unit)
+    }
+
+    fun findGameWithMaze(mazeId: MazeId): Result<Game, MazeNotFoundError> {
+        return Ok(games.values.find { it.mazes.find { it.id == mazeId } != null }!!)
     }
 }
 

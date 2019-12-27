@@ -6,6 +6,13 @@ import org.junit.jupiter.api.Assertions
 fun <O, E> assertOkEquals(expected: O, result: Result<O, E>) {
     when (result) {
         is Ok -> Assertions.assertEquals(result.okValue, expected)
+        is Err -> Assertions.fail("Expected result to be ok, but was an error: ${result.errorValue}")
+    }
+}
+
+fun <O, E> assertOk(result: Result<O, E>, assertion: (O) -> Unit) {
+    when (result) {
+        is Ok -> assertion(result.okValue)
         is Err -> Assertions.fail("Expected result to be ok, but was an error")
     }
 }

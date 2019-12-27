@@ -1,6 +1,8 @@
 package com.andreamazzarella.amaze.core.usecases
 
+import com.andreamazzarella.amaze.core.Game
 import com.andreamazzarella.amaze.core.GameId
+import com.andreamazzarella.amaze.core.Maze
 import com.andreamazzarella.amaze.core.MazeId
 import com.andreamazzarella.amaze.core.aMazeFromADrawing
 import com.andreamazzarella.amaze.persistence.GameRepository
@@ -24,10 +26,18 @@ class MakeAMaze(@Autowired private val mazeRepository: MazeRepository) {
         gameId: GameId,
         mazeDrawing: String = defaultMaze()
     ): Result<MazeId, GameDoesNotExist> {
-        return when (GameRepository.find(gameId)) {
-            is Ok -> Ok(UUID.randomUUID())
+        val gameFound = GameRepository.find(gameId)
+        return when (gameFound) {
+            is Ok -> addMazeToGame(gameFound.okValue)
             is Err -> Err(GameDoesNotExist)
         }
+    }
+
+    private fun addMazeToGame(game: Game): Result<MazeId, GameDoesNotExist> {
+        val mazeId = UUID.randomUUID()
+        val maze = aMazeFromADrawing(defaultMaze(), mazeId)
+        GameRepository.updateGame(game.withMaze(maze))
+        return Ok(mazeId)
     }
 
     private fun defaultMaze() =

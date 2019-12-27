@@ -296,12 +296,7 @@ port mazeUpdates : String -> Cmd msg
 
 view : Model -> Html Msg
 view model =
-    div []
-        [ controlAMaze
-        , button [ onClick SubscribeToMazeUpdates ] [ text "subscribe to maze updates" ]
-        , Element.layout [] <| startAGame_ model
-        , Element.layout [] <| view_ model
-        ]
+    Element.layout [] <| startAGame_ model
 
 
 startAGame_ : Model -> Element.Element Msg
@@ -316,7 +311,15 @@ startAGame_ model =
                     Element.text "failed to create a game - please refresh the page and try again"
 
                 Success (Api.Scalar.Id id) ->
-                    Element.text <| "GAME ID: " ++ id
+                    Element.column []
+                        [ Element.text <| "GAME ID: " ++ id
+                        , Element.html controlAMaze
+                        , Element.Input.button []
+                            { onPress = Just SubscribeToMazeUpdates
+                            , label = Element.text "subscribe to mazes updates"
+                            }
+                        , viewTheMazes model
+                        ]
 
         Nothing ->
             Element.Input.button []
@@ -325,8 +328,8 @@ startAGame_ model =
                 }
 
 
-view_ : Model -> Element.Element msg
-view_ model =
+viewTheMazes : Model -> Element.Element msg
+viewTheMazes model =
     Element.row [ Element.padding 55, Element.spacing 20 ] <| List.map viewMaze2 model.mazes
 
 

@@ -1,10 +1,21 @@
 package com.andreamazzarella.amaze.core
 
+import com.andreamazzarella.amaze.core.Position.*
 import java.lang.RuntimeException
 import java.util.UUID
 
-fun aMazeFromADrawing(drawing: String, id: UUID = UUID.randomUUID()): Maze {
-    val rows = drawing.split("\n").map { row -> row.toList() }
+const val DEFAULT_MAZE = """
+                            ⬛⚪⬛⬛
+                            ⬛⬜⬜⬤
+                            ⬛⬛⬛⬛
+                         """
+
+fun aMazeFromADrawing(
+    drawing: String,
+    entrance: Position = Position(Row(0), Column(1)),
+    id: UUID = UUID.randomUUID()
+): Maze {
+    val rows = drawing.trimIndent().split("\n").map { row -> row.toList() }
     val cells = gatherCells(rows)
     val currentPosition = findCurrentPosition(rows)
     val exit = findExit(rows)
@@ -12,6 +23,7 @@ fun aMazeFromADrawing(drawing: String, id: UUID = UUID.randomUUID()): Maze {
         id = id,
         cells = cells,
         currentPosition = currentPosition,
+        entrance = entrance,
         exit = exit
     )
 }
@@ -24,7 +36,7 @@ private fun findPositionOf(character: Char, rows: List<List<Char>>): Position {
     val accumulator: Position? = null
     return rows.foldIndexed(accumulator, { rowIndex, currentPosition, row ->
         if (row.indexOf(character) != -1) {
-            Position(Position.Row(rowIndex), Position.Column(row.indexOf(character)))
+            Position(Row(rowIndex), Column(row.indexOf(character)))
         } else {
             currentPosition
         }
@@ -35,8 +47,8 @@ private fun gatherCells(rows: List<List<Char>>): List<Cell> {
     return rows.mapIndexed { rowIndex, row ->
         row.mapIndexed { columnIndex, cellAsCharacter ->
             when (cellAsCharacter) {
-                '⬛' -> Wall(Position(Position.Row(rowIndex), Position.Column(columnIndex)))
-                '⚪', '⬜', '⬤' -> Floor(Position(Position.Row(rowIndex), Position.Column(columnIndex)))
+                '⬛' -> Wall(Position(Row(rowIndex), Column(columnIndex)))
+                '⚪', '⬜', '⬤' -> Floor(Position(Row(rowIndex), Column(columnIndex)))
                 else -> throw RuntimeException("this should never happen")
             }
         }

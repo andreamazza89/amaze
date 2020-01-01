@@ -6,19 +6,13 @@ import com.andreamazzarella.amaze.core.MazeId
 import com.andreamazzarella.amaze.utils.Err
 import com.andreamazzarella.amaze.utils.Ok
 import com.andreamazzarella.amaze.utils.Result
-import com.andreamazzarella.amaze.utils.pipe
 
 object GameRepository {
     private val games: MutableMap<GameId, Game> = mutableMapOf()
 
-    fun save(): GameId =
-        generateGameId()
-            .pipe {persist(it)}
-
-
-    private fun persist(gameId: GameId): GameId {
-        games[gameId] = Game(generateGameId())
-        return gameId
+    fun save(game: Game): GameId {
+        this.games[game.id] = game
+        return game.id
     }
 
     fun find(gameId: GameId): Result<Game, GameNotFoundError> {

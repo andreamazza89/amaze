@@ -27,12 +27,13 @@ class MazeTest {
                 ⬛⬜⬜⬜⬤
                 ⬛⬛⬛⬛⬛
             """.trimIndent(),
-            mazeId
+            id = mazeId
         )
 
         val expectedMaze = Maze(
             id = mazeId,
             currentPosition = pos(0, 1),
+            entrance = pos(0, 1),
             exit = pos(1, 4),
             cells = listOf(
                 Wall(pos(0, 0)), Floor(pos(0, 1)), Wall(pos(0, 2)), Wall(pos(0, 3)), Wall(pos(0, 4)),

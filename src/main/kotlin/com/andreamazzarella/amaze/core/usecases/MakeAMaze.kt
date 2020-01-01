@@ -18,7 +18,7 @@ import java.util.UUID
 class MakeAMaze(@Autowired private val mazeRepository: MazeRepository) {
     fun doIt(mazeDrawing: String = defaultMaze()): MazeId {
         val mazeId = UUID.randomUUID()
-        mazeRepository.save(mazeId, aMazeFromADrawing(mazeDrawing, mazeId))
+        mazeRepository.save(mazeId, aMazeFromADrawing(mazeDrawing, id = mazeId))
         return mazeId
     }
 
@@ -35,7 +35,7 @@ class MakeAMaze(@Autowired private val mazeRepository: MazeRepository) {
 
     private fun addMazeToGame(game: Game): Result<MazeId, GameDoesNotExist> {
         val mazeId = UUID.randomUUID()
-        val maze = aMazeFromADrawing(defaultMaze(), mazeId)
+        val maze = aMazeFromADrawing(defaultMaze(), id = mazeId)
         GameRepository.updateGame(game.withMaze(maze))
         return Ok(mazeId)
     }

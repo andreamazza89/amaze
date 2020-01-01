@@ -11,6 +11,7 @@ data class Maze(
     val id: MazeId,
     val cells: List<Cell>,
     val currentPosition: Position,
+    val entrance: Position,
     private val exit: Position
 ) {
 

@@ -17,6 +17,13 @@ fun <O, E> assertOk(result: Result<O, E>, assertion: (O) -> Unit) {
     }
 }
 
+fun <O, E> assertError(result: Result<O, E>, assertion: (E) -> Unit) {
+    when (result) {
+        is Ok -> Assertions.fail("Expected result to be an error, but was ok")
+        is Err -> assertion(result.errorValue)
+    }
+}
+
 fun <O, E> assertIsError(expected: E, result: Result<O, E>) {
     when (result) {
         is Ok -> Assertions.fail("Expected result to be an error, but was ok")

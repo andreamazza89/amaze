@@ -14,15 +14,16 @@ data class Game(
 
     // Query
 
-    fun playerPositions(): List<Pair<String, Position>> {
-        return this.players.map { it.name to it.currentPosition }
-    }
+    fun playerPositions(): List<Pair<String, Position>> =
+        this.players.map { it.name to it.currentPosition }
 
     // Update
 
-    fun withMaze(maze: Maze) = this.copy(mazes = mazes + maze)
+    fun withMaze(maze: Maze) =
+        this.copy(mazes = mazes + maze)
 
-    fun updateMaze(maze: Maze) = this.copy(mazes = mazes.filter { it.id != maze.id } + maze)
+    fun updateMaze(maze: Maze) =
+        this.copy(mazes = mazes.filter { it.id != maze.id } + maze)
 
     fun addPlayer(playerName: String): Result<Game, PlayerAlreadyExists> =
         checkPlayerCanBeAdded(playerName)

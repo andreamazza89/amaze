@@ -33,9 +33,10 @@ class TakeAStepTest {
     @Test
     fun `a player can take a step in the maze`() {
         val gameId = StartAGame.doIt()
-        val playerId = AddAPlayer.doIt(gameId, "runner 1").okOrFail()
 
-        TakeAStep2.doIt(gameId, playerId, DOWN)
+        AddAPlayer.doIt(gameId, "runner 1").okOrFail()
+
+        TakeAStep2.doIt(gameId, "runner 1", DOWN)
         val gameUpdated = GetAGame.doIt(gameId)
 
         assertOk(gameUpdated) { it.playerPositions() == listOf(Pair("runner 1", Position(Row(1), Column(1)))) }

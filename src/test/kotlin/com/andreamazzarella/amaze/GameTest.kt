@@ -17,7 +17,7 @@ class GameTest {
     fun `a new player is placed at the entrance of the maze`() {
         val maze = aMazeFromADrawing(DEFAULT_MAZE)
         val positions = Game(maze = maze)
-            .addPlayer("runner", UUID.randomUUID())
+            .addPlayer("runner")
             .map { it.playerPositions() }
 
         assertOkEquals(listOf(Pair("runner", maze.entrance)), positions)
@@ -28,8 +28,8 @@ class GameTest {
         val maze = aMazeFromADrawing(DEFAULT_MAZE)
 
         Game(maze = maze)
-            .addPlayer("runner", UUID.randomUUID())
-            .andThen {  it.addPlayer("runner", UUID.randomUUID()) }
+            .addPlayer("runner")
+            .andThen {  it.addPlayer("runner") }
             .pipe {assertError(it) {err -> err == Game.PlayerAlreadyExists}  }
 
     }

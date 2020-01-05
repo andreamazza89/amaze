@@ -2,7 +2,6 @@ package com.andreamazzarella.amaze.core
 
 import com.andreamazzarella.amaze.utils.Err
 import com.andreamazzarella.amaze.utils.Ok
-import java.util.UUID
 import com.andreamazzarella.amaze.utils.Result
 import com.andreamazzarella.amaze.utils.map
 
@@ -13,6 +12,14 @@ data class Game(
     private val players: List<Player> = emptyList()
 ) {
 
+    // Query
+
+    fun playerPositions(): List<Pair<String, Position>> {
+        return this.players.map { it.name to it.currentPosition }
+    }
+
+    // Update
+
     fun withMaze(maze: Maze) = this.copy(mazes = mazes + maze)
 
     fun updateMaze(maze: Maze) = this.copy(mazes = mazes.filter { it.id != maze.id } + maze)
@@ -21,15 +28,15 @@ data class Game(
         checkPlayerCanBeAdded(playerName)
             .map { this.copy(players = this.players + Player(playerName, maze.entrance)) }
 
-    fun playerPositions(): List<Pair<String, Position>> {
-        return this.players.map { it.name to it.currentPosition }
-    }
+    // Helpers
 
     private fun checkPlayerCanBeAdded(playerName: String): Result<Unit, PlayerAlreadyExists> =
         when {
             this.players.any { it.name == playerName } -> Err(PlayerAlreadyExists)
             else -> Ok(Unit)
         }
+
+    // Errors
 
     object PlayerAlreadyExists
 }

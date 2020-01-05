@@ -5,7 +5,6 @@ import assertOk
 import assertOkEquals
 import com.andreamazzarella.amaze.core.Position
 import com.andreamazzarella.amaze.core.Position.*
-import com.andreamazzarella.amaze.core.StepDirection
 import com.andreamazzarella.amaze.core.StepDirection.*
 import com.andreamazzarella.amaze.core.usecases.AddAPlayer
 import com.andreamazzarella.amaze.core.usecases.GetAGame
@@ -34,7 +33,7 @@ class TakeAStepTest {
     fun `a player can take a step in the maze`() {
         val gameId = StartAGame.doIt()
 
-        AddAPlayer.doIt(gameId, "runner 1").okOrFail()
+        AddAPlayer.doIt(gameId, "runner 1")
 
         TakeAStep2.doIt(gameId, "runner 1", DOWN)
         val gameUpdated = GetAGame.doIt(gameId)

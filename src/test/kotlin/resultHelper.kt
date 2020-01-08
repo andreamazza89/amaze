@@ -13,7 +13,7 @@ fun <O, E> assertOkEquals(expected: O, result: Result<O, E>) {
 fun <O, E> assertOk(result: Result<O, E>, assertion: (O) -> Unit) {
     when (result) {
         is Ok -> assertion(result.okValue)
-        is Err -> Assertions.fail("Expected result to be ok, but was an error")
+        is Err -> Assertions.fail("Expected result to be ok, but was an error: ${result.errorValue}")
     }
 }
 

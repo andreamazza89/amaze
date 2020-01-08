@@ -4,13 +4,10 @@ import com.andreamazzarella.amaze.core.Maze
 import com.andreamazzarella.amaze.core.MazeId
 import com.andreamazzarella.amaze.core.Position
 import com.andreamazzarella.amaze.core.StepDirection
-import com.andreamazzarella.amaze.persistence.GameRepository
 import com.andreamazzarella.amaze.persistence.MazeRepository
-import com.andreamazzarella.amaze.utils.Ok
 import com.andreamazzarella.amaze.utils.Result
 import com.andreamazzarella.amaze.utils.andThen
 import com.andreamazzarella.amaze.utils.mapError
-import com.andreamazzarella.amaze.utils.okOrFail
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
 
@@ -27,15 +24,6 @@ class TakeAStep(@Autowired private val mazeRepository: MazeRepository) {
                     newPosition
                 )
             }
-    }
-
-    fun doIt2(mazeId: MazeId, stepDirection: StepDirection): Result<Position, TakeAStepError> {
-        val game = GameRepository.findGameWithMaze(mazeId).okOrFail()
-        val maze = game.mazes.find { maze -> maze.id == mazeId }!!
-        val newMaze = maze.takeAStep2(stepDirection).okOrFail()
-        val gameUpdated = game.updateMaze(newMaze)
-        GameRepository.updateGame(gameUpdated)
-        return Ok(newMaze.currentPosition)
     }
 }
 

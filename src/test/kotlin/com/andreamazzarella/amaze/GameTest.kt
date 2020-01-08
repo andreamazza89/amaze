@@ -1,13 +1,20 @@
 package com.andreamazzarella.amaze
 
 import assertError
+import assertOk
 import assertOkEquals
 import com.andreamazzarella.amaze.core.DEFAULT_MAZE
 import com.andreamazzarella.amaze.core.Game
+import com.andreamazzarella.amaze.core.Position
+import com.andreamazzarella.amaze.core.Position.*
+import com.andreamazzarella.amaze.core.StepDirection
+import com.andreamazzarella.amaze.core.StepDirection.*
 import com.andreamazzarella.amaze.core.aMazeFromADrawing
 import com.andreamazzarella.amaze.utils.andThen
 import com.andreamazzarella.amaze.utils.map
 import com.andreamazzarella.amaze.utils.pipe
+import com.andreamazzarella.amaze.utils.Result
+import com.andreamazzarella.amaze.utils.okOrFail
 import org.junit.jupiter.api.Test
 import java.util.UUID
 
@@ -29,8 +36,28 @@ class GameTest {
 
         Game(maze = maze)
             .addPlayer("runner")
-            .andThen {  it.addPlayer("runner") }
-            .pipe {assertError(it) {err -> err == Game.PlayerAlreadyExists}  }
+            .andThen { it.addPlayer("runner") }
+            .pipe { assertError(it) { err -> err == Game.PlayerAlreadyExists } }
+    }
 
+    @Test
+    fun `a player cannot take a step if they are not in the game`() {
+        val maze = aMazeFromADrawing(DEFAULT_MAZE)
+
+        val stepResult = Game(maze = maze).takeAStep("runner not in this game", DOWN)
+
+        assertError(stepResult) { err -> err == Game.StepError.PlayerNotFound }
+    }
+
+    @Test
+    fun `a player can take a step in a game they are in`() {
+        val maze = aMazeFromADrawing(DEFAULT_MAZE)
+
+        val initialGame = Game(maze = maze).addPlayer("runner").okOrFail()
+
+        val gameWithStep = initialGame.takeAStep("runner", DOWN)
+        val expectedNewPosition = Position(Row(1), Column(1))
+
+        assertOk(gameWithStep) { game -> game.playerPositions() == listOf("runner" to expectedNewPosition) }
     }
 }

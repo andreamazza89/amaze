@@ -24,11 +24,11 @@ data class Maze(
         }
     }
 
-    fun takeAStep2(direction: StepDirection): Result<Maze, StepError> {
-        val newPosition = this.currentPosition.nearby(direction)
+    fun takeAStep2(currentPosition: Position, direction: StepDirection): Result<Position, StepError> {
+        val newPosition = currentPosition.nearby(direction)
         return when (cellAt(newPosition)) {
             is Wall -> Err(StepError())
-            is Floor -> Ok(this.withPosition(newPosition))
+            is Floor -> Ok(newPosition)
             is OutsideMaze -> Err(StepError("you walked out of the maze"))
         }
     }

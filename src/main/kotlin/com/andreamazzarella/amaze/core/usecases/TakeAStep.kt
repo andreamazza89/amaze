@@ -38,11 +38,7 @@ private fun updatePosition(
     mazeId: MazeId,
     newPosition: Position
 ): Result<Position, TakeAStepError> =
-    mazeRepository.updatePosition(mazeId, newPosition).mapError {
-        TakeAStepError(
-            MazeNotFound
-        )
-    }
+    mazeRepository.updatePosition(mazeId, newPosition).mapError { TakeAStepError(MazeNotFound) }
 
 data class TakeAStepError(val error: PotentialStepError)
 sealed class PotentialStepError

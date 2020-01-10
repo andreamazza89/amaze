@@ -21,10 +21,16 @@ object TakeAStep2 {
 
     private fun takeAStep(game: Game, playerName: String, direction: StepDirection): Result<Game, TakeAStep2Error> =
         game.takeAStep(playerName, direction)
-            .mapError { TakeAStep2Error.InvalidStep }
+            .mapError { err ->
+                when (err) {
+                    Game.StepError.PlayerNotFound -> TakeAStep2Error.PlayerNotInThisGame
+                    Game.StepError.InvalidStep -> TakeAStep2Error.InvalidStep
+                }
+            }
 }
 
 sealed class TakeAStep2Error {
     object GameDoesNotExist : TakeAStep2Error()
     object InvalidStep : TakeAStep2Error()
+    object PlayerNotInThisGame : TakeAStep2Error()
 }

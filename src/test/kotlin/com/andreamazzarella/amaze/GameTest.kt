@@ -6,17 +6,15 @@ import assertOkEquals
 import com.andreamazzarella.amaze.core.DEFAULT_MAZE
 import com.andreamazzarella.amaze.core.Game
 import com.andreamazzarella.amaze.core.Position
-import com.andreamazzarella.amaze.core.Position.*
-import com.andreamazzarella.amaze.core.StepDirection
-import com.andreamazzarella.amaze.core.StepDirection.*
+import com.andreamazzarella.amaze.core.Position.Column
+import com.andreamazzarella.amaze.core.Position.Row
+import com.andreamazzarella.amaze.core.StepDirection.DOWN
 import com.andreamazzarella.amaze.core.aMazeFromADrawing
 import com.andreamazzarella.amaze.utils.andThen
 import com.andreamazzarella.amaze.utils.map
-import com.andreamazzarella.amaze.utils.pipe
-import com.andreamazzarella.amaze.utils.Result
 import com.andreamazzarella.amaze.utils.okOrFail
+import com.andreamazzarella.amaze.utils.pipe
 import org.junit.jupiter.api.Test
-import java.util.UUID
 
 class GameTest {
 
@@ -50,14 +48,24 @@ class GameTest {
     }
 
     @Test
-    fun `a player can take a step in a game they are in`() {
+    fun `multiple players can take a step in a game they are in`() {
         val maze = aMazeFromADrawing(DEFAULT_MAZE)
 
-        val initialGame = Game(maze = maze).addPlayer("runner").okOrFail()
+        val initialGame = Game(maze = maze)
+            .addPlayer("runner 1")
+            .andThen { it.addPlayer("runner 2") }
+            .okOrFail()
 
-        val gameWithStep = initialGame.takeAStep("runner", DOWN)
+        val gameWithSteps = initialGame
+            .takeAStep("runner 1", DOWN)
+            .andThen { it.takeAStep("runner 2", DOWN) }
         val expectedNewPosition = Position(Row(1), Column(1))
 
-        assertOk(gameWithStep) { game -> game.playerPositions() == listOf("runner" to expectedNewPosition) }
+        assertOk(gameWithSteps) { game ->
+            game.playerPositions() == listOf(
+                "runner 1" to expectedNewPosition,
+                "runner 2" to expectedNewPosition
+            )
+        }
     }
 }

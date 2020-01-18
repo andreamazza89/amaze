@@ -4,8 +4,20 @@ type Query {
 
 type Mutation {
     startAGame: ID!
+    addAPlayerToAGame(gameId: ID!): AddAPlayerResponse!
     createAMaze(mazeRunner: String!): ID!
     takeAStep(mazeId: ID!, stepDirection: Direction!): StepResult!
+    takeAStep2(gameId: ID!, playerName: String!, stepDirection: Direction!): StepResult!
+}
+
+union AddAPlayerResponse = Success | Failure
+
+type Success {
+    message: String
+}
+
+type Failure {
+    message: String
 }
 
 type Subscription {

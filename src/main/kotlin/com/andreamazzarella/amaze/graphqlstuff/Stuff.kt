@@ -1,6 +1,7 @@
 package com.andreamazzarella.amaze.graphqlstuff
 
 import com.andreamazzarella.amaze.core.Floor
+import com.andreamazzarella.amaze.core.Game
 import com.andreamazzarella.amaze.core.usecases.GetAMaze
 import com.andreamazzarella.amaze.core.usecases.HitAWall
 import com.andreamazzarella.amaze.core.usecases.MakeAMaze
@@ -13,11 +14,13 @@ import com.andreamazzarella.amaze.core.usecases.TakeAStep
 import com.andreamazzarella.amaze.core.usecases.TakeAStepError
 import com.andreamazzarella.amaze.core.Wall
 import com.andreamazzarella.amaze.core.usecases.StartAGame
+import com.andreamazzarella.amaze.core.usecases.TakeAStep2
 import com.andreamazzarella.amaze.persistence.MazeNotFoundError
 import com.andreamazzarella.amaze.persistence.MazeRepository
 import com.andreamazzarella.amaze.utils.Err
 import com.andreamazzarella.amaze.utils.Ok
 import com.andreamazzarella.amaze.utils.Result
+import com.andreamazzarella.amaze.utils.map
 import com.coxautodev.graphql.tools.GraphQLMutationResolver
 import com.coxautodev.graphql.tools.GraphQLQueryResolver
 import com.coxautodev.graphql.tools.GraphQLSubscriptionResolver
@@ -42,6 +45,8 @@ class Configuration() {
             .add(StepResultResponse.HitAWall::class)
             .add(StepResultResponse.MazeDoesNotExist::class)
             .add(StepResultResponse.NewPosition::class)
+            .add(AddAPlayerResponse.Success::class)
+            .add(AddAPlayerResponse.Failure::class)
             .add(CellResponse.Wall::class)
             .add(CellResponse.Floor::class)
     }
@@ -84,6 +89,12 @@ private fun toCellsResponse(maze: Maze): List<CellResponse> =
 class StartAGameResolver() : GraphQLMutationResolver {
     fun startAGame(): GameId = StartAGame.doIt()
 }
+
+@Component
+class AddAPlayerResolver() : GraphQLMutationResolver {
+    fun addAPlayerToAGame(gameId: GameId): GameId = StartAGame.doIt()
+}
+
 
 typealias GameId = String
 
@@ -131,6 +142,41 @@ private fun toPositionResponse(position: Position) = PositionResponse(position.x
 
 typealias MazeId = UUID
 
+@Component
+class TakeAStepTwo(@Autowired val mazesPublisher: MyMazesPublisher) : GraphQLMutationResolver {
+    fun takeAStep2(gameId: GameId, playerName: String, stepDirection: StepDirectionRequest): StepResultResponse {
+        TakeAStep2.doIt(gameId, playerName, fromStepDirectionRequest(stepDirection))
+            .map { newPosition ->
+                // mazesPublisher.emitter!!.onNext(mazeRepository.allMazes().map(::toMazeInfoResponse))
+                StepResultResponse.NewPosition(toPositionResponse(newPosition))
+            }
+            .whenError { toStepResultErrorResponse(it)}
+    }
+
+    // need takeAStep2 to return the new position rather than gameId
+
+    // private fun toStepResultResponse(stepResult: Result<Position, TakeAStepError>): StepResultResponse =
+    //     when (stepResult) {
+    //         is Ok -> {
+    //         }
+    //         is Err -> toStepResultErrorResponse(stepResult.errorValue)
+    //     }
+
+    private fun toStepResultErrorResponse(error: TakeAStepError): StepResultResponse =
+        when (error.error) {
+            MazeNotFound -> StepResultResponse.MazeDoesNotExist("could not find your maze")
+            HitAWall -> StepResultResponse.HitAWall("you hit a wall")
+        }
+
+    private fun fromStepDirectionRequest(stepDirection: StepDirectionRequest): StepDirection =
+        when (stepDirection) {
+            StepDirectionRequest.UP -> StepDirection.UP
+            StepDirectionRequest.RIGHT -> StepDirection.RIGHT
+            StepDirectionRequest.DOWN -> StepDirection.DOWN
+            StepDirectionRequest.LEFT -> StepDirection.LEFT
+        }
+}
+
 ////////////////////////
 // data transfer objects
 
@@ -146,10 +192,16 @@ sealed class CellResponse {
 }
 
 data class PositionResponse(private val x: Int, private val y: Int)
+
 sealed class StepResultResponse {
     data class MazeDoesNotExist(val message: String) : StepResultResponse()
     data class HitAWall(val message: String) : StepResultResponse()
     data class NewPosition(val position: PositionResponse) : StepResultResponse()
+}
+
+sealed class AddAPlayerResponse {
+    data class Success(val message: String?) : AddAPlayerResponse()
+    data class Failure(val message: String?) : AddAPlayerResponse()
 }
 
 ////////////////////////

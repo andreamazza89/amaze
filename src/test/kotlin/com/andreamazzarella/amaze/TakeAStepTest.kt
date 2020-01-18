@@ -24,7 +24,7 @@ class TakeAStepTest {
         TakeAStep2.doIt(gameId, "runner 1", DOWN)
         val gameUpdated = GetAGame.doIt(gameId)
 
-        assertOk(gameUpdated) { it.playerPositions() == listOf(Pair("runner 1", Position(Row(1), Column(1)))) }
+        assertOk(gameUpdated) { it.playersPositions() == listOf(Pair("runner 1", Position(Row(1), Column(1)))) }
     }
 
     @Test

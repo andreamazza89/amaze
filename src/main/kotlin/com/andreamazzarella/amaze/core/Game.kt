@@ -17,8 +17,18 @@ data class Game(
 
     // Query
 
-    fun playerPositions(): List<Pair<String, Position>> =
+    fun playersPositions(): List<Pair<String, Position>> =
         this.players.map { it.name to it.currentPosition }
+
+    fun playerPosition(playerName: String): Result<Position, StepError> =
+        players.find { it.name == playerName }
+            .pipe { player ->
+                if (player == null) {
+                    Err(StepError.PlayerNotFound)
+                } else {
+                    Ok(player.currentPosition)
+                }
+            }
 
     // Update
 
@@ -49,16 +59,6 @@ data class Game(
             this.players.any { it.name == playerName } -> Err(PlayerAlreadyExists)
             else -> Ok(Unit)
         }
-
-    private fun playerPosition(playerName: String): Result<Position, StepError> =
-        players.find { it.name == playerName }
-            .pipe { player ->
-                if (player == null) {
-                    Err(StepError.PlayerNotFound)
-                } else {
-                    Ok(player.currentPosition)
-                }
-            }
 
     private fun updatePlayerPosition(playerName: String, newPosition: Position): Game =
         this.copy(players = players.map {

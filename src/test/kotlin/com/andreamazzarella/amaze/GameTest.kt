@@ -23,7 +23,7 @@ class GameTest {
         val maze = aMazeFromADrawing(DEFAULT_MAZE)
         val positions = Game(maze = maze)
             .addPlayer("runner")
-            .map { it.playerPositions() }
+            .map { it.playersPositions() }
 
         assertOkEquals(listOf(Pair("runner", maze.entrance)), positions)
     }
@@ -62,7 +62,7 @@ class GameTest {
         val expectedNewPosition = Position(Row(1), Column(1))
 
         assertOk(gameWithSteps) { game ->
-            game.playerPositions() == listOf(
+            game.playersPositions() == listOf(
                 "runner 1" to expectedNewPosition,
                 "runner 2" to expectedNewPosition
             )

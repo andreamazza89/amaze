@@ -27,9 +27,26 @@ fun <O, E, T> Result<O, E>.andThen(doThisIfAllWentWell: (O) -> Result<T, E>): Re
     }
 }
 
+// fun <O, E, T> Result<O, E>.whenError(f: (E) -> T): Result<O,T> {
+//     return when (this) {
+//         is Ok -> doThisIfAllWentWell(this.okValue)
+//         is Err -> Err(this.errorValue)
+//     }
+// }
+
 fun <O, E> Result<O, E>.okOrFail(): O {
     return when (this) {
         is Ok -> this.okValue
         is Err -> throw RuntimeException("value should not be an error when calling this function")
+    }
+}
+
+fun <O, E> Result<O, E>.runOnOk(run: (O) -> Unit): Result<O, E> {
+    return when (this) {
+        is Ok -> {
+            run(this.okValue)
+            this
+        }
+        is Err -> Err(this.errorValue)
     }
 }

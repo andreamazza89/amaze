@@ -27,12 +27,12 @@ fun <O, E, T> Result<O, E>.andThen(doThisIfAllWentWell: (O) -> Result<T, E>): Re
     }
 }
 
-// fun <O, E, T> Result<O, E>.whenError(f: (E) -> T): Result<O,T> {
-//     return when (this) {
-//         is Ok -> doThisIfAllWentWell(this.okValue)
-//         is Err -> Err(this.errorValue)
-//     }
-// }
+fun <O, E, T> Result<O, E>.whenError(f: (E) -> T): Result<O,T> {
+    return when (this) {
+        is Ok -> Ok(this.okValue)
+        is Err -> Err(f(this.errorValue))
+    }
+}
 
 fun <O, E> Result<O, E>.okOrFail(): O {
     return when (this) {

@@ -1,13 +1,15 @@
 type Query {
-    myMaze(mazeId: ID!): MazeInfo!
+    gameInfo(gameId: ID!, playerName: String!): GameInfo!
 }
 
 type Mutation {
     startAGame: ID!
-    addAPlayerToAGame(gameId: ID!): AddAPlayerResponse!
-    createAMaze(mazeRunner: String!): ID!
-    takeAStep(mazeId: ID!, stepDirection: Direction!): StepResult!
+    addAPlayerToAGame(gameId: ID!, playerName: String!): AddAPlayerResponse!
     takeAStep2(gameId: ID!, playerName: String!, stepDirection: Direction!): StepResult!
+}
+
+type Subscription {
+    gameStatus(gameId: ID!): GameStatus!
 }
 
 union AddAPlayerResponse = Success | Failure
@@ -20,8 +22,19 @@ type Failure {
     message: String
 }
 
-type Subscription {
-    allMazes: [MazeInfo!]!
+type GameInfo {
+    maze: Maze!,
+    yourPosition: Position!
+}
+
+type GameStatus {
+    maze: Maze!,
+    playersPositions: [PlayerPosition!]!
+}
+
+type PlayerPosition {
+    playerName: String!
+    position: Position!
 }
 
 type MazeInfo {
@@ -55,13 +68,17 @@ enum Direction {
     LEFT
 }
 
-union StepResult = MazeDoesNotExist | HitAWall | NewPosition
+union StepResult = GameDoesNotExist | HitAWall | PlayerNotInThisGame | NewPosition
 
-type MazeDoesNotExist {
+type GameDoesNotExist {
     message: String!
 }
 
 type HitAWall {
+    message: String!
+}
+
+type PlayerNotInThisGame {
     message: String!
 }
 

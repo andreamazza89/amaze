@@ -1,7 +1,6 @@
 package com.andreamazzarella.amaze.graphqlstuff
 
 import com.andreamazzarella.amaze.core.Floor
-import com.andreamazzarella.amaze.core.Game
 import com.andreamazzarella.amaze.core.usecases.GetAMaze
 import com.andreamazzarella.amaze.core.usecases.HitAWall
 import com.andreamazzarella.amaze.core.usecases.MakeAMaze
@@ -13,14 +12,16 @@ import com.andreamazzarella.amaze.core.StepDirection
 import com.andreamazzarella.amaze.core.usecases.TakeAStep
 import com.andreamazzarella.amaze.core.usecases.TakeAStepError
 import com.andreamazzarella.amaze.core.Wall
+import com.andreamazzarella.amaze.core.usecases.AddAPlayer
 import com.andreamazzarella.amaze.core.usecases.StartAGame
 import com.andreamazzarella.amaze.core.usecases.TakeAStep2
+import com.andreamazzarella.amaze.core.usecases.TakeAStep2Error
 import com.andreamazzarella.amaze.persistence.MazeNotFoundError
 import com.andreamazzarella.amaze.persistence.MazeRepository
 import com.andreamazzarella.amaze.utils.Err
 import com.andreamazzarella.amaze.utils.Ok
 import com.andreamazzarella.amaze.utils.Result
-import com.andreamazzarella.amaze.utils.map
+import com.andreamazzarella.amaze.utils.pipe
 import com.coxautodev.graphql.tools.GraphQLMutationResolver
 import com.coxautodev.graphql.tools.GraphQLQueryResolver
 import com.coxautodev.graphql.tools.GraphQLSubscriptionResolver
@@ -43,7 +44,8 @@ class Configuration() {
     fun dictionaryParser(): SchemaParserDictionary {
         return SchemaParserDictionary()
             .add(StepResultResponse.HitAWall::class)
-            .add(StepResultResponse.MazeDoesNotExist::class)
+            .add(StepResultResponse.GameDoesNotExist::class)
+            .add(StepResultResponse.PlayerNotInThisGame::class)
             .add(StepResultResponse.NewPosition::class)
             .add(AddAPlayerResponse.Success::class)
             .add(AddAPlayerResponse.Failure::class)
@@ -56,21 +58,20 @@ class Configuration() {
 // resolvers
 
 @Component
-class MyMaze(@Autowired val getAMaze: GetAMaze) : GraphQLQueryResolver {
-    fun myMaze(mazeId: UUID): MazeInfoResponse {
-        val getAMazeResult = getAMaze.doIt(mazeId)
-        return toMazeInfoResponseFromResult(getAMazeResult)
+class GameInfo(@Autowired val getAMaze: GetAMaze) : GraphQLQueryResolver {
+    fun gameInfo(gameId: GameId, playerName: String): GameInfoResponse {
+        TODO()
     }
 }
 
-private fun toMazeInfoResponseFromResult(findMazeResult: Result<Maze, MazeNotFoundError>): MazeInfoResponse =
+private fun toMazeInfoResponseFromResult(findMazeResult: Result<Maze, MazeNotFoundError>): GameInfoResponse =
     when (findMazeResult) {
         is Ok -> toMazeInfoResponse(findMazeResult.okValue)
         is Err -> TODO()
     }
 
-private fun toMazeInfoResponse(maze: Maze): MazeInfoResponse {
-    return MazeInfoResponse(
+private fun toMazeInfoResponse(maze: Maze): GameInfoResponse {
+    return GameInfoResponse(
         MazeResponse(toCellsResponse(maze)),
         toPositionResponse(maze.currentPosition)
     )
@@ -92,7 +93,14 @@ class StartAGameResolver() : GraphQLMutationResolver {
 
 @Component
 class AddAPlayerResolver() : GraphQLMutationResolver {
-    fun addAPlayerToAGame(gameId: GameId): GameId = StartAGame.doIt()
+    fun addAPlayerToAGame(gameId: GameId, playerName: String): AddAPlayerResponse =
+        AddAPlayer.doIt(gameId, playerName)
+            .pipe {
+                when (it) {
+                    is Ok -> AddAPlayerResponse.Success("player added")
+                    is Err -> AddAPlayerResponse.Failure("could not add player")
+                }
+            }
 }
 
 
@@ -107,7 +115,7 @@ class CreateAMaze(@Autowired val makeAMaze: MakeAMaze) : GraphQLMutationResolver
 class TakeAStepInTheMaze(
     @Autowired val takeAStep: TakeAStep,
     @Autowired val mazeRepository: MazeRepository,
-    @Autowired val mazesPublisher: MyMazesPublisher
+    @Autowired val gamePublisher: MyGamePublisher
 ) : GraphQLMutationResolver {
     fun takeAStep(mazeId: MazeId, stepDirection: StepDirectionRequest): StepResultResponse {
         val stepResult = takeAStep.doIt(mazeId, fromStepDirectionRequest(stepDirection))
@@ -117,7 +125,7 @@ class TakeAStepInTheMaze(
     private fun toStepResultResponse(stepResult: Result<Position, TakeAStepError>): StepResultResponse =
         when (stepResult) {
             is Ok -> {
-                mazesPublisher.emitter!!.onNext(mazeRepository.allMazes().map(::toMazeInfoResponse))
+                // gamePublisher.emitter!!.onNext(mazeRepository.allMazes().map(::toMazeInfoResponse))
                 StepResultResponse.NewPosition(toPositionResponse(stepResult.okValue))
             }
             is Err -> toStepResultErrorResponse(stepResult.errorValue)
@@ -125,7 +133,7 @@ class TakeAStepInTheMaze(
 
     private fun toStepResultErrorResponse(error: TakeAStepError): StepResultResponse =
         when (error.error) {
-            MazeNotFound -> StepResultResponse.MazeDoesNotExist("could not find your maze")
+            MazeNotFound -> StepResultResponse.GameDoesNotExist("could not find your maze")
             HitAWall -> StepResultResponse.HitAWall("you hit a wall")
         }
 
@@ -143,29 +151,27 @@ private fun toPositionResponse(position: Position) = PositionResponse(position.x
 typealias MazeId = UUID
 
 @Component
-class TakeAStepTwo(@Autowired val mazesPublisher: MyMazesPublisher) : GraphQLMutationResolver {
-    fun takeAStep2(gameId: GameId, playerName: String, stepDirection: StepDirectionRequest): StepResultResponse {
+class TakeAStepTwo(@Autowired val gamePublisher: MyGamePublisher) : GraphQLMutationResolver {
+    fun takeAStep2(gameId: GameId, playerName: String, stepDirection: StepDirectionRequest): StepResultResponse =
         TakeAStep2.doIt(gameId, playerName, fromStepDirectionRequest(stepDirection))
-            .map { newPosition ->
-                // mazesPublisher.emitter!!.onNext(mazeRepository.allMazes().map(::toMazeInfoResponse))
-                StepResultResponse.NewPosition(toPositionResponse(newPosition))
+            .pipe { newPosition ->
+                when (newPosition) {
+                    is Ok -> StepResultResponse.NewPosition(toPositionResponse(newPosition.okValue))
+                    is Err -> toStepResultErrorResponse2(newPosition.errorValue)
+                }
             }
-            .whenError { toStepResultErrorResponse(it)}
-    }
-
-    // need takeAStep2 to return the new position rather than gameId
-
-    // private fun toStepResultResponse(stepResult: Result<Position, TakeAStepError>): StepResultResponse =
-    //     when (stepResult) {
-    //         is Ok -> {
-    //         }
-    //         is Err -> toStepResultErrorResponse(stepResult.errorValue)
-    //     }
 
     private fun toStepResultErrorResponse(error: TakeAStepError): StepResultResponse =
         when (error.error) {
-            MazeNotFound -> StepResultResponse.MazeDoesNotExist("could not find your maze")
+            MazeNotFound -> StepResultResponse.GameDoesNotExist("could not find your maze")
             HitAWall -> StepResultResponse.HitAWall("you hit a wall")
+        }
+
+    private fun toStepResultErrorResponse2(error: TakeAStep2Error): StepResultResponse =
+        when (error) {
+            TakeAStep2Error.GameDoesNotExist -> StepResultResponse.GameDoesNotExist("could not find your maze")
+            TakeAStep2Error.InvalidStep -> StepResultResponse.HitAWall("you hit a wall")
+            TakeAStep2Error.PlayerNotInThisGame -> TODO()
         }
 
     private fun fromStepDirectionRequest(stepDirection: StepDirectionRequest): StepDirection =
@@ -182,7 +188,8 @@ class TakeAStepTwo(@Autowired val mazesPublisher: MyMazesPublisher) : GraphQLMut
 
 enum class StepDirectionRequest { UP, RIGHT, DOWN, LEFT }
 
-data class MazeInfoResponse(private val maze: MazeResponse, private val yourPosition: PositionResponse)
+data class GameInfoResponse(private val maze: MazeResponse, private val yourPosition: PositionResponse)
+data class GameStatusResponse(private val maze: MazeResponse, private val playersPositions: List<PlayerPositionResponse>)
 data class MazeResponse(private val cells: List<CellResponse>)
 sealed class CellResponse {
     abstract val position: PositionResponse
@@ -192,10 +199,12 @@ sealed class CellResponse {
 }
 
 data class PositionResponse(private val x: Int, private val y: Int)
+data class PlayerPositionResponse(private val playerName: String, private val position: PositionResponse)
 
 sealed class StepResultResponse {
-    data class MazeDoesNotExist(val message: String) : StepResultResponse()
+    data class GameDoesNotExist(val message: String) : StepResultResponse()
     data class HitAWall(val message: String) : StepResultResponse()
+    data class PlayerNotInThisGame(val message: String) : StepResultResponse()
     data class NewPosition(val position: PositionResponse) : StepResultResponse()
 }
 
@@ -208,17 +217,17 @@ sealed class AddAPlayerResponse {
 // subscriptions
 
 @Component
-class MazesInfoSubscription(@Autowired val mazesPublisher: MyMazesPublisher) : GraphQLSubscriptionResolver {
-    fun allMazes(): Publisher<List<MazeInfoResponse>> = mazesPublisher.publisher
+class GameSubscription(@Autowired val gamePublisher: MyGamePublisher) : GraphQLSubscriptionResolver {
+    fun gameStatus(gameId: GameId): Publisher<GameStatusResponse> = gamePublisher.publisher
 }
 
 @Component
-class MyMazesPublisher {
-    final var emitter: ObservableEmitter<List<MazeInfoResponse>>? = null
-    final val publisher: Flowable<List<MazeInfoResponse>>
+class MyGamePublisher {
+    final var emitter: ObservableEmitter<GameStatusResponse>? = null
+    final val publisher: Flowable<GameStatusResponse>
 
     init {
-        val myObservable = Observable.create<List<MazeInfoResponse>> { emitter -> this.emitter = emitter }
+        val myObservable = Observable.create<GameStatusResponse> { emitter -> this.emitter = emitter }
 
         val connectableObservable = myObservable.share().publish()
         connectableObservable.connect()

@@ -5,11 +5,11 @@ type Query {
 type Mutation {
     startAGame: ID!
     addAPlayerToAGame(gameId: ID!, playerName: String!): AddAPlayerResponse!
-    takeAStep2(gameId: ID!, playerName: String!, stepDirection: Direction!): StepResult!
+    takeAStep(gameId: ID!, playerName: String!, stepDirection: Direction!): StepResult!
 }
 
 type Subscription {
-    gameStatus(gameId: ID!): GameStatus!
+    gameStatus: GameStatus!
 }
 
 union AddAPlayerResponse = Success | Failure

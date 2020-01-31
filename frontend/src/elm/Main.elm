@@ -4,8 +4,9 @@ import Api.Enum.Direction
 import Api.Mutation
 import Api.Object
 import Api.Object.Floor
+import Api.Object.GameStatus
 import Api.Object.Maze
-import Api.Object.MazeInfo
+import Api.Object.PlayerPosition
 import Api.Object.Position
 import Api.Object.Wall
 import Api.Scalar exposing (Id)
@@ -65,15 +66,16 @@ main =
 
 
 type alias Model =
-    { mazes : List MazeInfoInternal
+    { game : Maybe (Webdata GameStatusInternal)
     , controllingMazeId : String
     , gameId : Maybe (Webdata Api.Scalar.Id)
+    , stuff : Maybe GameStatusInternal
     }
 
 
 type Msg
     = MazesInformationReceived Decode.Value
-    | SubscribeToMazeUpdates
+    | SubscribeToGameUpdates
     | MazeIdTyped String
     | MoveRunnerClicked StepDirection
     | TakeAStepResponseReceived
@@ -92,9 +94,15 @@ type StepDirection
     | RIGHT
 
 
-type alias MazeInfoInternal =
-    { runnerPosition : PositionInternal
-    , maze : MazeInternal
+type alias GameStatusInternal =
+    { maze : MazeInternal
+    , runners : List RunnerInternal
+    }
+
+
+type alias RunnerInternal =
+    { name : String
+    , position : PositionInternal
     }
 
 
@@ -138,9 +146,10 @@ init _ =
 
 initialModel : Model
 initialModel =
-    { mazes = []
+    { game = Nothing
     , controllingMazeId = ""
     , gameId = Nothing
+    , stuff = Nothing
     }
 
 
@@ -154,8 +163,8 @@ update msg model =
         MazesInformationReceived mazesInfo ->
             decodeMazesInfo mazesInfo model
 
-        SubscribeToMazeUpdates ->
-            ( model, subscribeToMazesUpdates )
+        SubscribeToGameUpdates ->
+            ( model, subscribeToGameUpdates )
 
         MazeIdTyped mazeId ->
             ( { model | controllingMazeId = mazeId }, Cmd.none )
@@ -164,7 +173,7 @@ update msg model =
             ( model, takeAStep model.controllingMazeId stepDirection )
 
         TakeAStepResponseReceived ->
-            ( model, subscribeToMazesUpdates )
+            ( model, Cmd.none )
 
         StartAGameClicked ->
             ( model, startAGame )
@@ -174,10 +183,10 @@ update msg model =
 
 
 decodeMazesInfo : Decode.Value -> Model -> ( Model, Cmd msg )
-decodeMazesInfo mazesInfo model =
-    case Decode.decodeValue mazeInfoDecoder mazesInfo of
-        Ok mazes_ ->
-            ( { model | mazes = mazes_ }, Cmd.none )
+decodeMazesInfo gameInfo model =
+    case Decode.decodeValue gameStatusDecoder gameInfo of
+        Ok stuff_ ->
+            ( { model | stuff = Just stuff_ }, Cmd.none )
 
         Err _ ->
             ( model, Cmd.none )
@@ -193,14 +202,18 @@ startAGame =
 
 takeAStep : String -> StepDirection -> Cmd Msg
 takeAStep mazeId stepDirection =
-    Graphql.Http.mutationRequest
-        "http://localhost:8080/graphql"
-        (Api.Mutation.takeAStep { mazeId = toApiMazeId mazeId, stepDirection = toApiStep stepDirection } (SelectionSet.succeed ()))
-        |> Graphql.Http.send (always TakeAStepResponseReceived)
+    Cmd.none
 
 
-toApiMazeId : String -> Id
-toApiMazeId id =
+
+--Graphql.Http.mutationRequest
+--    "http://localhost:8080/graphql"
+--    (Api.Mutation.takeAStep { mazeId = toApiMazeId mazeId, stepDirection = toApiStep stepDirection } (SelectionSet.succeed ()))
+--    |> Graphql.Http.send (always TakeAStepResponseReceived)
+
+
+toId : String -> Id
+toId id =
     Api.Scalar.Id id
 
 
@@ -220,21 +233,28 @@ toApiStep step =
             Api.Enum.Direction.Right
 
 
-mazeInfoDecoder : Decode.Decoder (List MazeInfoInternal)
-mazeInfoDecoder =
-    Graphql.Document.decoder mazesSelection
+gameStatusDecoder : Decode.Decoder GameStatusInternal
+gameStatusDecoder =
+    Graphql.Document.decoder gameSelection
 
 
-mazesSelection : SelectionSet (List MazeInfoInternal) RootSubscription
-mazesSelection =
-    Subscription.allMazes mazeInfoSelection
+gameSelection : SelectionSet GameStatusInternal RootSubscription
+gameSelection =
+    Subscription.gameStatus gameInfoSelection
 
 
-mazeInfoSelection : SelectionSet MazeInfoInternal Api.Object.MazeInfo
-mazeInfoSelection =
-    SelectionSet.succeed MazeInfoInternal
-        |> with (Api.Object.MazeInfo.yourPosition positionSelection)
-        |> with (Api.Object.MazeInfo.maze mazeSelection)
+gameInfoSelection : SelectionSet GameStatusInternal Api.Object.GameStatus
+gameInfoSelection =
+    SelectionSet.succeed GameStatusInternal
+        |> with (Api.Object.GameStatus.maze mazeSelection)
+        |> with (Api.Object.GameStatus.playersPositions playerSelection)
+
+
+playerSelection : SelectionSet RunnerInternal Api.Object.PlayerPosition
+playerSelection =
+    SelectionSet.succeed RunnerInternal
+        |> with Api.Object.PlayerPosition.playerName
+        |> with (Api.Object.PlayerPosition.position positionSelection)
 
 
 positionSelection : SelectionSet PositionInternal Api.Object.Position
@@ -279,15 +299,17 @@ subscriptions _ =
     mazesInformationReceived MazesInformationReceived
 
 
-subscribeToMazesUpdates : Cmd msg
-subscribeToMazesUpdates =
-    mazeUpdates <| Graphql.Document.serializeSubscription mazesSelection
+subscribeToGameUpdates : Cmd msg
+subscribeToGameUpdates =
+    gameSelection
+        |> Graphql.Document.serializeSubscription
+        |> gameUpdates
 
 
 port mazesInformationReceived : (Decode.Value -> msg) -> Sub msg
 
 
-port mazeUpdates : String -> Cmd msg
+port gameUpdates : String -> Cmd msg
 
 
 
@@ -315,10 +337,10 @@ startAGame_ model =
                         [ Element.text <| "GAME ID: " ++ id
                         , Element.html controlAMaze
                         , Element.Input.button []
-                            { onPress = Just SubscribeToMazeUpdates
-                            , label = Element.text "subscribe to mazes updates"
+                            { onPress = Just SubscribeToGameUpdates
+                            , label = Element.text "subscribe to game updates"
                             }
-                        , viewTheMazes model
+                        , Maybe.map (\s -> viewMaze2 s.maze) model.stuff |> Maybe.withDefault Element.none
                         ]
 
         Nothing ->
@@ -328,35 +350,31 @@ startAGame_ model =
                 }
 
 
-viewTheMazes : Model -> Element.Element msg
-viewTheMazes model =
-    Element.row [ Element.padding 55, Element.spacing 20 ] <| List.map viewMaze2 model.mazes
+viewTheMazes : MazeInternal -> Element.Element msg
+viewTheMazes maze =
+    viewMaze2 maze
 
 
-viewMaze2 : MazeInfoInternal -> Element.Element msg
-viewMaze2 mazeInfo =
-    makeRows mazeInfo.maze.cells []
-        |> List.map (viewRow2 mazeInfo.runnerPosition)
+viewMaze2 : MazeInternal -> Element.Element msg
+viewMaze2 maze =
+    makeRows maze.cells []
+        |> List.map viewRow2
         |> Element.column []
 
 
-viewRow2 : PositionInternal -> List CellInternal -> Element.Element msg
-viewRow2 runnerPosition row =
-    Element.row [] <| List.map (viewCell2 runnerPosition) row
+viewRow2 : List CellInternal -> Element.Element msg
+viewRow2 row =
+    Element.row [] <| List.map viewCell2 row
 
 
-viewCell2 : PositionInternal -> CellInternal -> Element.Element msg
-viewCell2 runnerPosition cell_ =
+viewCell2 : CellInternal -> Element.Element msg
+viewCell2 cell_ =
     case cell_ of
         Wall _ ->
             darkCell
 
-        Floor position ->
-            if runnerPosition == position then
-                runnerCell
-
-            else
-                lightCell
+        Floor _ ->
+            lightCell
 
 
 darkCell : Element.Element msg

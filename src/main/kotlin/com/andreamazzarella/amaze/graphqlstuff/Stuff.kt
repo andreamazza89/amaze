@@ -1,6 +1,7 @@
 package com.andreamazzarella.amaze.graphqlstuff
 
 import com.andreamazzarella.amaze.core.Floor
+import com.andreamazzarella.amaze.core.Game
 import com.andreamazzarella.amaze.core.usecases.GetAMaze
 import com.andreamazzarella.amaze.core.usecases.HitAWall
 import com.andreamazzarella.amaze.core.usecases.MakeAMaze
@@ -16,12 +17,14 @@ import com.andreamazzarella.amaze.core.usecases.AddAPlayer
 import com.andreamazzarella.amaze.core.usecases.StartAGame
 import com.andreamazzarella.amaze.core.usecases.TakeAStep2
 import com.andreamazzarella.amaze.core.usecases.TakeAStep2Error
+import com.andreamazzarella.amaze.persistence.GameRepository
 import com.andreamazzarella.amaze.persistence.MazeNotFoundError
 import com.andreamazzarella.amaze.persistence.MazeRepository
 import com.andreamazzarella.amaze.utils.Err
 import com.andreamazzarella.amaze.utils.Ok
 import com.andreamazzarella.amaze.utils.Result
 import com.andreamazzarella.amaze.utils.pipe
+import com.andreamazzarella.amaze.utils.runOnOk
 import com.coxautodev.graphql.tools.GraphQLMutationResolver
 import com.coxautodev.graphql.tools.GraphQLQueryResolver
 import com.coxautodev.graphql.tools.GraphQLSubscriptionResolver
@@ -92,15 +95,26 @@ class StartAGameResolver() : GraphQLMutationResolver {
 }
 
 @Component
-class AddAPlayerResolver() : GraphQLMutationResolver {
-    fun addAPlayerToAGame(gameId: GameId, playerName: String): AddAPlayerResponse =
-        AddAPlayer.doIt(gameId, playerName)
+class AddAPlayerResolver(@Autowired val gamePublisher: MyGamePublisher) : GraphQLMutationResolver {
+    fun addAPlayerToAGame(gameId: GameId, playerName: String): AddAPlayerResponse {
+        val response = AddAPlayer.doIt(gameId, playerName)
             .pipe {
                 when (it) {
                     is Ok -> AddAPlayerResponse.Success("player added")
                     is Err -> AddAPlayerResponse.Failure("could not add player")
                 }
             }
+        GameRepository.find(gameId).runOnOk { gamePublisher.emitter!!.onNext(toGameStatusResponse(it)) }
+        return response
+    }
+
+    fun toGameStatusResponse(game: Game) =
+        GameStatusResponse(
+            MazeResponse(toCellsResponse(game.maze)),
+            game.playersPositions().map(::toPlayerPositionResponse)
+        )
+    fun toPlayerPositionResponse(player: Pair<String, Position>) =
+        PlayerPositionResponse(player.first, toPositionResponse(player.second))
 }
 
 
@@ -152,7 +166,7 @@ typealias MazeId = UUID
 
 @Component
 class TakeAStepTwo(@Autowired val gamePublisher: MyGamePublisher) : GraphQLMutationResolver {
-    fun takeAStep2(gameId: GameId, playerName: String, stepDirection: StepDirectionRequest): StepResultResponse =
+    fun takeAStep(gameId: GameId, playerName: String, stepDirection: StepDirectionRequest): StepResultResponse =
         TakeAStep2.doIt(gameId, playerName, fromStepDirectionRequest(stepDirection))
             .pipe { newPosition ->
                 when (newPosition) {
@@ -218,7 +232,7 @@ sealed class AddAPlayerResponse {
 
 @Component
 class GameSubscription(@Autowired val gamePublisher: MyGamePublisher) : GraphQLSubscriptionResolver {
-    fun gameStatus(gameId: GameId): Publisher<GameStatusResponse> = gamePublisher.publisher
+    fun gameStatus(): Publisher<GameStatusResponse> = gamePublisher.publisher
 }
 
 @Component

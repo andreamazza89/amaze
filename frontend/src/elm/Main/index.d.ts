@@ -9,7 +9,7 @@ export namespace Elm {
         mazesInformationReceived: {
           send(data: any): void
         }
-        mazeUpdates: {
+        gameUpdates: {
           subscribe(callback: (data: string) => void): void
         }
       };

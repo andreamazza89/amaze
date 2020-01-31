@@ -7,7 +7,7 @@ const app = Elm.Main.init({
 
 const webSocket = new WebSocket('ws://localhost:8080/subscriptions');
 
-app.ports.mazeUpdates.subscribe(subscription => {
+app.ports.gameUpdates.subscribe(subscription => {
     webSocket.send(JSON.stringify({query: subscription}));
 });
 

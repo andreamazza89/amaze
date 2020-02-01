@@ -74,8 +74,8 @@ type alias Model =
 
 
 type Msg
-    = MazesInformationReceived Decode.Value
-    | SubscribeToGameUpdates
+    = MazesInformationReceived Api.Scalar.Id Decode.Value
+    | SubscribeToGameUpdates Api.Scalar.Id
     | MazeIdTyped String
     | MoveRunnerClicked StepDirection
     | TakeAStepResponseReceived
@@ -160,11 +160,11 @@ initialModel =
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        MazesInformationReceived mazesInfo ->
-            decodeMazesInfo mazesInfo model
+        MazesInformationReceived gameId mazesInfo ->
+            decodeMazesInfo gameId mazesInfo model
 
-        SubscribeToGameUpdates ->
-            ( model, subscribeToGameUpdates )
+        SubscribeToGameUpdates id ->
+            ( model, subscribeToGameUpdates id )
 
         MazeIdTyped mazeId ->
             ( { model | controllingMazeId = mazeId }, Cmd.none )
@@ -182,9 +182,9 @@ update msg model =
             ( { model | gameId = Just response }, Cmd.none )
 
 
-decodeMazesInfo : Decode.Value -> Model -> ( Model, Cmd msg )
-decodeMazesInfo gameInfo model =
-    case Decode.decodeValue gameStatusDecoder gameInfo of
+decodeMazesInfo : Api.Scalar.Id -> Decode.Value -> Model -> ( Model, Cmd msg )
+decodeMazesInfo gameId gameInfo model =
+    case Decode.decodeValue (gameStatusDecoder gameId) gameInfo of
         Ok stuff_ ->
             ( { model | stuff = Just stuff_ }, Cmd.none )
 
@@ -233,14 +233,14 @@ toApiStep step =
             Api.Enum.Direction.Right
 
 
-gameStatusDecoder : Decode.Decoder GameStatusInternal
-gameStatusDecoder =
-    Graphql.Document.decoder gameSelection
+gameStatusDecoder : Api.Scalar.Id -> Decode.Decoder GameStatusInternal
+gameStatusDecoder id =
+    Graphql.Document.decoder <| gameSelection id
 
 
-gameSelection : SelectionSet GameStatusInternal RootSubscription
-gameSelection =
-    Subscription.gameStatus gameInfoSelection
+gameSelection : Api.Scalar.Id -> SelectionSet GameStatusInternal RootSubscription
+gameSelection gameId =
+    Subscription.gameStatus { gameId = gameId } gameInfoSelection
 
 
 gameInfoSelection : SelectionSet GameStatusInternal Api.Object.GameStatus
@@ -295,13 +295,23 @@ floorSelection =
 
 
 subscriptions : Model -> Sub Msg
-subscriptions _ =
-    mazesInformationReceived MazesInformationReceived
+subscriptions model =
+    case model.gameId of
+        Just id ->
+            case id of
+                Success id_ ->
+                    mazesInformationReceived <| MazesInformationReceived id_
+
+                _ ->
+                    Sub.none
+
+        Nothing ->
+            Sub.none
 
 
-subscribeToGameUpdates : Cmd msg
-subscribeToGameUpdates =
-    gameSelection
+subscribeToGameUpdates : Api.Scalar.Id -> Cmd msg
+subscribeToGameUpdates id =
+    gameSelection id
         |> Graphql.Document.serializeSubscription
         |> gameUpdates
 
@@ -337,7 +347,7 @@ startAGame_ model =
                         [ Element.text <| "GAME ID: " ++ id
                         , Element.html controlAMaze
                         , Element.Input.button []
-                            { onPress = Just SubscribeToGameUpdates
+                            { onPress = Just <| SubscribeToGameUpdates (toId id)
                             , label = Element.text "subscribe to game updates"
                             }
                         , Maybe.map (\s -> viewMaze2 s.maze) model.stuff |> Maybe.withDefault Element.none

@@ -9,7 +9,7 @@ type Mutation {
 }
 
 type Subscription {
-    gameStatus: GameStatus!
+    gameStatus(gameId: ID!): GameStatus!
 }
 
 union AddAPlayerResponse = Success | Failure

@@ -95,7 +95,7 @@ class StartAGameResolver() : GraphQLMutationResolver {
 }
 
 @Component
-class AddAPlayerResolver(@Autowired val gamePublisher: MyGamePublisher) : GraphQLMutationResolver {
+class AddAPlayerResolver(@Autowired val gamePublisherThing: GamePublishersThing) : GraphQLMutationResolver {
     fun addAPlayerToAGame(gameId: GameId, playerName: String): AddAPlayerResponse {
         val response = AddAPlayer.doIt(gameId, playerName)
             .pipe {
@@ -104,7 +104,7 @@ class AddAPlayerResolver(@Autowired val gamePublisher: MyGamePublisher) : GraphQ
                     is Err -> AddAPlayerResponse.Failure("could not add player")
                 }
             }
-        GameRepository.find(gameId).runOnOk { gamePublisher.emitter!!.onNext(toGameStatusResponse(it)) }
+        GameRepository.find(gameId).runOnOk { gamePublisherThing.emitForGame(gameId, toGameStatusResponse(it)) }
         return response
     }
 
@@ -128,8 +128,7 @@ class CreateAMaze(@Autowired val makeAMaze: MakeAMaze) : GraphQLMutationResolver
 @Component
 class TakeAStepInTheMaze(
     @Autowired val takeAStep: TakeAStep,
-    @Autowired val mazeRepository: MazeRepository,
-    @Autowired val gamePublisher: MyGamePublisher
+    @Autowired val mazeRepository: MazeRepository
 ) : GraphQLMutationResolver {
     fun takeAStep(mazeId: MazeId, stepDirection: StepDirectionRequest): StepResultResponse {
         val stepResult = takeAStep.doIt(mazeId, fromStepDirectionRequest(stepDirection))
@@ -165,7 +164,7 @@ private fun toPositionResponse(position: Position) = PositionResponse(position.x
 typealias MazeId = UUID
 
 @Component
-class TakeAStepTwo(@Autowired val gamePublisher: MyGamePublisher) : GraphQLMutationResolver {
+class TakeAStepTwo : GraphQLMutationResolver {
     fun takeAStep(gameId: GameId, playerName: String, stepDirection: StepDirectionRequest): StepResultResponse =
         TakeAStep2.doIt(gameId, playerName, fromStepDirectionRequest(stepDirection))
             .pipe { newPosition ->
@@ -231,14 +230,31 @@ sealed class AddAPlayerResponse {
 // subscriptions
 
 @Component
-class GameSubscription(@Autowired val gamePublisher: MyGamePublisher) : GraphQLSubscriptionResolver {
-    fun gameStatus(): Publisher<GameStatusResponse> = gamePublisher.publisher
+class GameSubscription(@Autowired val gamePublishersBuilder: GamePublishersThing) : GraphQLSubscriptionResolver {
+    fun gameStatus(gameId: GameId): Publisher<GameStatusResponse> = gamePublishersBuilder.publisherForGameId(gameId)
 }
 
 @Component
+class GamePublishersThing {
+    private val publishers: MutableMap<GameId, MyGamePublisher> = mutableMapOf()
+
+    fun publisherForGameId(gameId: GameId): Publisher<GameStatusResponse> =
+        publishers[gameId]?.publisher ?: initialisePublisher(gameId).publisher
+
+    private fun initialisePublisher(gameId: GameId): MyGamePublisher {
+        val publisher = MyGamePublisher()
+        publishers[gameId] = publisher
+        return publisher
+    }
+
+    fun emitForGame(gameId: GameId, messageToEmit: GameStatusResponse) {
+        publishers[gameId]!!.emitter!!.onNext(messageToEmit)
+    }
+}
+
 class MyGamePublisher {
-    final var emitter: ObservableEmitter<GameStatusResponse>? = null
-    final val publisher: Flowable<GameStatusResponse>
+    var emitter: ObservableEmitter<GameStatusResponse>? = null
+    val publisher: Flowable<GameStatusResponse>
 
     init {
         val myObservable = Observable.create<GameStatusResponse> { emitter -> this.emitter = emitter }

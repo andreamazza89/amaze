@@ -66,10 +66,9 @@ main =
 
 
 type alias Model =
-    { game : Maybe (Webdata GameStatusInternal)
-    , controllingMazeId : String
+    { controllingMazeId : String
     , gameId : Maybe (Webdata Api.Scalar.Id)
-    , stuff : Maybe GameStatusInternal
+    , gameInfo : Maybe GameStatusInternal
     }
 
 
@@ -146,10 +145,9 @@ init _ =
 
 initialModel : Model
 initialModel =
-    { game = Nothing
-    , controllingMazeId = ""
+    { controllingMazeId = ""
     , gameId = Nothing
-    , stuff = Nothing
+    , gameInfo = Nothing
     }
 
 
@@ -186,7 +184,7 @@ decodeMazesInfo : Api.Scalar.Id -> Decode.Value -> Model -> ( Model, Cmd msg )
 decodeMazesInfo gameId gameInfo model =
     case Decode.decodeValue (gameStatusDecoder gameId) gameInfo of
         Ok stuff_ ->
-            ( { model | stuff = Just stuff_ }, Cmd.none )
+            ( { model | gameInfo = Just stuff_ }, Cmd.none )
 
         Err _ ->
             ( model, Cmd.none )
@@ -345,12 +343,11 @@ startAGame_ model =
                 Success (Api.Scalar.Id id) ->
                     Element.column []
                         [ Element.text <| "GAME ID: " ++ id
-                        , Element.html controlAMaze
                         , Element.Input.button []
                             { onPress = Just <| SubscribeToGameUpdates (toId id)
                             , label = Element.text "subscribe to game updates"
                             }
-                        , Maybe.map (\s -> viewMaze2 s.maze) model.stuff |> Maybe.withDefault Element.none
+                        , Maybe.map (\s -> viewMaze2 s.maze) model.gameInfo |> Maybe.withDefault Element.none
                         ]
 
         Nothing ->

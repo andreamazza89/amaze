@@ -74,7 +74,6 @@ type alias Model =
 
 type Msg
     = MazesInformationReceived Api.Scalar.Id Decode.Value
-    | SubscribeToGameUpdates Api.Scalar.Id
     | MazeIdTyped String
     | MoveRunnerClicked StepDirection
     | TakeAStepResponseReceived
@@ -161,9 +160,6 @@ update msg model =
         MazesInformationReceived gameId mazesInfo ->
             decodeMazesInfo gameId mazesInfo model
 
-        SubscribeToGameUpdates id ->
-            ( model, subscribeToGameUpdates id )
-
         MazeIdTyped mazeId ->
             ( { model | controllingMazeId = mazeId }, Cmd.none )
 
@@ -177,7 +173,7 @@ update msg model =
             ( model, startAGame )
 
         StartAGameResponseReceived response ->
-            ( { model | gameId = Just response }, Cmd.none )
+            ( { model | gameId = Just response }, subscribeToGameIfOneWasCreated response )
 
 
 decodeMazesInfo : Api.Scalar.Id -> Decode.Value -> Model -> ( Model, Cmd msg )
@@ -307,6 +303,16 @@ subscriptions model =
             Sub.none
 
 
+subscribeToGameIfOneWasCreated : Webdata Api.Scalar.Id -> Cmd Msg
+subscribeToGameIfOneWasCreated response =
+    case response of
+        Success id ->
+            subscribeToGameUpdates id
+
+        _ ->
+            Cmd.none
+
+
 subscribeToGameUpdates : Api.Scalar.Id -> Cmd msg
 subscribeToGameUpdates id =
     gameSelection id
@@ -343,10 +349,6 @@ startAGame_ model =
                 Success (Api.Scalar.Id id) ->
                     Element.column []
                         [ Element.text <| "GAME ID: " ++ id
-                        , Element.Input.button []
-                            { onPress = Just <| SubscribeToGameUpdates (toId id)
-                            , label = Element.text "subscribe to game updates"
-                            }
                         , Maybe.map (\s -> viewMaze2 s.maze) model.gameInfo |> Maybe.withDefault Element.none
                         ]
 

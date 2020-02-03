@@ -105,8 +105,8 @@ type alias RunnerInternal =
 
 
 type alias PositionInternal =
-    { x : Int
-    , y : Int
+    { column : Int
+    , row : Int
     }
 
 
@@ -127,10 +127,10 @@ getY : CellInternal -> Int
 getY cell_ =
     case cell_ of
         Wall position ->
-            position.y
+            position.row
 
         Floor position ->
-            position.y
+            position.row
 
 
 
@@ -349,7 +349,7 @@ startAGame_ model =
                 Success (Api.Scalar.Id id) ->
                     Element.column []
                         [ Element.text <| "GAME ID: " ++ id
-                        , Maybe.map (\s -> viewMaze2 s.maze) model.gameInfo |> Maybe.withDefault Element.none
+                        , Maybe.map viewMaze2 model.gameInfo |> Maybe.withDefault Element.none
                         ]
 
         Nothing ->
@@ -359,14 +359,9 @@ startAGame_ model =
                 }
 
 
-viewTheMazes : MazeInternal -> Element.Element msg
-viewTheMazes maze =
-    viewMaze2 maze
-
-
-viewMaze2 : MazeInternal -> Element.Element msg
-viewMaze2 maze =
-    makeRows maze.cells []
+viewMaze2 : GameStatusInternal -> Element.Element msg
+viewMaze2 gameStatus =
+    makeRows gameStatus.maze.cells []
         |> List.map viewRow2
         |> Element.column []
 

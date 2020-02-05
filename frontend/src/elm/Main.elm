@@ -14,6 +14,7 @@ import Api.Subscription as Subscription
 import Api.Union
 import Api.Union.Cell
 import Browser
+import Dict exposing (Dict)
 import Element
 import Element.Background
 import Element.Border
@@ -123,8 +124,17 @@ type CellInternal
     | Floor PositionInternal
 
 
-getY : CellInternal -> Int
-getY cell_ =
+type alias RowOfCells =
+    List SimplifiedCell
+
+
+type SimplifiedCell
+    = SimplifiedWall
+    | SimplifiedFloor -- ideally this will carry a maybe player
+
+
+getRow : CellInternal -> Int
+getRow cell_ =
     case cell_ of
         Wall position ->
             position.row
@@ -361,14 +371,29 @@ startAGame_ model =
 
 viewMaze2 : GameStatusInternal -> Element.Element msg
 viewMaze2 gameStatus =
-    makeRows gameStatus.maze.cells []
-        |> List.map viewRow2
+    makeRows2 gameStatus.maze.cells
+        |> List.map viewRow
         |> Element.column []
+
+
+viewRow : RowOfCells -> Element.Element msg
+viewRow row =
+    Element.row [] <| List.map viewCell row
 
 
 viewRow2 : List CellInternal -> Element.Element msg
 viewRow2 row =
     Element.row [] <| List.map viewCell2 row
+
+
+viewCell : SimplifiedCell -> Element.Element msg
+viewCell cell_ =
+    case cell_ of
+        SimplifiedWall ->
+            darkCell
+
+        SimplifiedFloor ->
+            lightCell
 
 
 viewCell2 : CellInternal -> Element.Element msg
@@ -410,6 +435,42 @@ cell attributes =
         Element.none
 
 
+makeRows2 : List CellInternal -> List RowOfCells
+makeRows2 cells =
+    cells
+        |> List.foldl accumulateIntoMapOfRows Dict.empty
+        |> Dict.map (\_ apiCells -> fromApiCells apiCells)
+        |> Dict.values
+
+
+accumulateIntoMapOfRows : CellInternal -> Dict Int (List CellInternal) -> Dict Int (List CellInternal)
+accumulateIntoMapOfRows apiCell rows =
+    let
+        rowN =
+            getRow apiCell
+    in
+    case Dict.get rowN rows of
+        Just _ ->
+            Dict.update rowN (\maybeRow -> Maybe.map (\r -> r ++ [ apiCell ]) maybeRow) rows
+
+        Nothing ->
+            Dict.insert rowN [ apiCell ] rows
+
+
+fromApiCells : List CellInternal -> List SimplifiedCell
+fromApiCells cellInternal =
+    cellInternal
+        |> List.map
+            (\c ->
+                case c of
+                    Floor _ ->
+                        SimplifiedFloor
+
+                    Wall _ ->
+                        SimplifiedWall
+            )
+
+
 makeRows : List CellInternal -> List (List CellInternal) -> List (List CellInternal)
 makeRows allCells cellsIntoRows =
     if List.isEmpty allCells then
@@ -418,10 +479,10 @@ makeRows allCells cellsIntoRows =
     else
         let
             nextRow =
-                List.filter (\c -> getY c == getY (Maybe.withDefault (Floor (PositionInternal 2 3)) (List.head allCells))) allCells
+                List.filter (\c -> getRow c == getRow (Maybe.withDefault (Floor (PositionInternal 2 3)) (List.head allCells))) allCells
 
             remainingCells =
-                List.filter (\c -> getY c /= getY (Maybe.withDefault (Floor (PositionInternal 2 3)) (List.head allCells))) allCells
+                List.filter (\c -> getRow c /= getRow (Maybe.withDefault (Floor (PositionInternal 2 3)) (List.head allCells))) allCells
         in
         makeRows remainingCells (cellsIntoRows ++ [ nextRow ])
 

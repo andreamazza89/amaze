@@ -46,6 +46,7 @@ fromResult result =
 
 
 
+-- Api
 -- Program
 
 
@@ -66,6 +67,7 @@ main =
 type alias Model =
     { gameId : Maybe (Webdata Api.Scalar.Id)
     , gameInfo : Maybe GameStatusInternal
+    , gameInfo2 : Maybe GameStatus
     }
 
 
@@ -89,6 +91,11 @@ type StepDirection
 type alias GameStatusInternal =
     { maze : MazeInternal
     , runners : List RunnerInternal
+    }
+
+
+type alias GameStatus =
+    { maze : List RowOfCells
     }
 
 
@@ -149,6 +156,7 @@ initialModel : Model
 initialModel =
     { gameId = Nothing
     , gameInfo = Nothing
+    , gameInfo2 = Nothing
     }
 
 
@@ -190,6 +198,22 @@ startAGame =
 gameStatusDecoder : Api.Scalar.Id -> Decode.Decoder GameStatusInternal
 gameStatusDecoder id =
     Graphql.Document.decoder <| gameSelection id
+
+
+gameStatusDecoder2 : Api.Scalar.Id -> Decode.Decoder GameStatus
+gameStatusDecoder2 id =
+    Graphql.Document.decoder (gameSelection2 id)
+        |> Decode.andThen theOne
+
+
+theOne : GameStatusInternal -> Decode.Decoder GameStatus
+theOne apiThing =
+    Decode.succeed (GameStatus <| makeRows2 apiThing.maze.cells)
+
+
+gameSelection2 : Api.Scalar.Id -> SelectionSet GameStatusInternal RootSubscription
+gameSelection2 gameId =
+    Subscription.gameStatus { gameId = gameId } gameInfoSelection
 
 
 gameSelection : Api.Scalar.Id -> SelectionSet GameStatusInternal RootSubscription

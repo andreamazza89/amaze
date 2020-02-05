@@ -1,6 +1,5 @@
 port module Main exposing (main)
 
-import Api.Enum.Direction
 import Api.Mutation
 import Api.Object
 import Api.Object.Floor
@@ -17,14 +16,12 @@ import Browser
 import Dict exposing (Dict)
 import Element
 import Element.Background
-import Element.Border
 import Element.Input
 import Graphql.Document
 import Graphql.Http exposing (Error)
 import Graphql.Operation exposing (RootSubscription)
 import Graphql.SelectionSet as SelectionSet exposing (SelectionSet(..), with)
-import Html exposing (Html, button, div, input, text)
-import Html.Events exposing (onClick, onInput)
+import Html exposing (Html)
 import Json.Decode as Decode
 
 
@@ -67,17 +64,13 @@ main =
 
 
 type alias Model =
-    { controllingMazeId : String
-    , gameId : Maybe (Webdata Api.Scalar.Id)
+    { gameId : Maybe (Webdata Api.Scalar.Id)
     , gameInfo : Maybe GameStatusInternal
     }
 
 
 type Msg
     = MazesInformationReceived Api.Scalar.Id Decode.Value
-    | MazeIdTyped String
-    | MoveRunnerClicked StepDirection
-    | TakeAStepResponseReceived
     | StartAGameClicked
     | StartAGameResponseReceived (Webdata Api.Scalar.Id)
 
@@ -154,8 +147,7 @@ init _ =
 
 initialModel : Model
 initialModel =
-    { controllingMazeId = ""
-    , gameId = Nothing
+    { gameId = Nothing
     , gameInfo = Nothing
     }
 
@@ -169,15 +161,6 @@ update msg model =
     case msg of
         MazesInformationReceived gameId mazesInfo ->
             decodeMazesInfo gameId mazesInfo model
-
-        MazeIdTyped mazeId ->
-            ( { model | controllingMazeId = mazeId }, Cmd.none )
-
-        MoveRunnerClicked stepDirection ->
-            ( model, takeAStep model.controllingMazeId stepDirection )
-
-        TakeAStepResponseReceived ->
-            ( model, Cmd.none )
 
         StartAGameClicked ->
             ( model, startAGame )
@@ -202,39 +185,6 @@ startAGame =
         "http://localhost:8080/graphql"
         Api.Mutation.startAGame
         |> Graphql.Http.send (fromResult >> StartAGameResponseReceived)
-
-
-takeAStep : String -> StepDirection -> Cmd Msg
-takeAStep mazeId stepDirection =
-    Cmd.none
-
-
-
---Graphql.Http.mutationRequest
---    "http://localhost:8080/graphql"
---    (Api.Mutation.takeAStep { mazeId = toApiMazeId mazeId, stepDirection = toApiStep stepDirection } (SelectionSet.succeed ()))
---    |> Graphql.Http.send (always TakeAStepResponseReceived)
-
-
-toId : String -> Id
-toId id =
-    Api.Scalar.Id id
-
-
-toApiStep : StepDirection -> Api.Enum.Direction.Direction
-toApiStep step =
-    case step of
-        UP ->
-            Api.Enum.Direction.Up
-
-        DOWN ->
-            Api.Enum.Direction.Down
-
-        LEFT ->
-            Api.Enum.Direction.Left
-
-        RIGHT ->
-            Api.Enum.Direction.Right
 
 
 gameStatusDecoder : Api.Scalar.Id -> Decode.Decoder GameStatusInternal
@@ -381,11 +331,6 @@ viewRow row =
     Element.row [] <| List.map viewCell row
 
 
-viewRow2 : List CellInternal -> Element.Element msg
-viewRow2 row =
-    Element.row [] <| List.map viewCell2 row
-
-
 viewCell : SimplifiedCell -> Element.Element msg
 viewCell cell_ =
     case cell_ of
@@ -393,16 +338,6 @@ viewCell cell_ =
             darkCell
 
         SimplifiedFloor ->
-            lightCell
-
-
-viewCell2 : CellInternal -> Element.Element msg
-viewCell2 cell_ =
-    case cell_ of
-        Wall _ ->
-            darkCell
-
-        Floor _ ->
             lightCell
 
 
@@ -414,14 +349,6 @@ darkCell =
 lightCell : Element.Element msg
 lightCell =
     cell [ Element.Background.color <| Element.rgb255 255 255 255 ]
-
-
-runnerCell : Element.Element msg
-runnerCell =
-    cell
-        [ Element.Background.color <| Element.rgb255 51 204 51
-        , Element.Border.rounded 200
-        ]
 
 
 cell : List (Element.Attribute msg) -> Element.Element msg
@@ -469,30 +396,3 @@ fromApiCells cellInternal =
                     Wall _ ->
                         SimplifiedWall
             )
-
-
-makeRows : List CellInternal -> List (List CellInternal) -> List (List CellInternal)
-makeRows allCells cellsIntoRows =
-    if List.isEmpty allCells then
-        cellsIntoRows
-
-    else
-        let
-            nextRow =
-                List.filter (\c -> getRow c == getRow (Maybe.withDefault (Floor (PositionInternal 2 3)) (List.head allCells))) allCells
-
-            remainingCells =
-                List.filter (\c -> getRow c /= getRow (Maybe.withDefault (Floor (PositionInternal 2 3)) (List.head allCells))) allCells
-        in
-        makeRows remainingCells (cellsIntoRows ++ [ nextRow ])
-
-
-controlAMaze : Html Msg
-controlAMaze =
-    div []
-        [ input [ onInput MazeIdTyped ] []
-        , button [ onClick <| MoveRunnerClicked UP ] [ text "UP" ]
-        , button [ onClick <| MoveRunnerClicked DOWN ] [ text "DOWN" ]
-        , button [ onClick <| MoveRunnerClicked LEFT ] [ text "LEFT" ]
-        , button [ onClick <| MoveRunnerClicked RIGHT ] [ text "RIGHT" ]
-        ]

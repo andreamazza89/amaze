@@ -23,14 +23,9 @@ main =
         }
 
 
-
--- Model
-
-
-type alias Model =
-    { gameId : Maybe (MazeApi.Webdata MazeApi.GameId)
-    , gameStatus : Maybe MazeApi.GameStatus
-    }
+type Model
+    = WatchingAGame MazeApi.GameId (MazeApi.Webdata MazeApi.GameStatus)
+    | SelectingAGame (MazeApi.Webdata (List MazeApi.GameId))
 
 
 type Msg
@@ -50,9 +45,7 @@ init _ =
 
 initialModel : Model
 initialModel =
-    { gameId = Nothing
-    , gameStatus = Nothing
-    }
+    SelectingAGame MazeApi.Loading
 
 
 
@@ -69,14 +62,27 @@ update msg model =
             ( model, MazeApi.startAGame StartAGameResponseReceived )
 
         StartAGameResponseReceived response ->
-            ( { model | gameId = Just response }, subscribeToGameIfOneWasCreated response )
+            handleGameCreationResponse response
+
+
+handleGameCreationResponse response =
+    case response of
+        MazeApi.Success gameId ->
+            ( WatchingAGame gameId MazeApi.Loading, Cmd.none )
+
+        -- can we make this disappear?
+        MazeApi.Loading ->
+            ( SelectingAGame MazeApi.Loading, Cmd.none )
+
+        MazeApi.Failed ->
+            ( SelectingAGame MazeApi.Loading, Cmd.none )
 
 
 decodeGameStatus : MazeApi.GameId -> Decode.Value -> Model -> ( Model, Cmd msg )
 decodeGameStatus gameId rawGameStatus model =
     case Decode.decodeValue (MazeApi.gameStatusDecoder gameId) rawGameStatus of
         Ok gameStatus_ ->
-            ( { model | gameStatus = Just gameStatus_ }, Cmd.none )
+            ( WatchingAGame gameId (MazeApi.Success gameStatus_), Cmd.none )
 
         Err _ ->
             ( model, Cmd.none )
@@ -88,28 +94,12 @@ decodeGameStatus gameId rawGameStatus model =
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
-    case model.gameId of
-        Just id ->
-            case id of
-                MazeApi.Success id_ ->
-                    mazesInformationReceived <| MazesInformationReceived id_
+    case model of
+        WatchingAGame gameId _ ->
+            mazesInformationReceived <| MazesInformationReceived gameId
 
-                _ ->
-                    Sub.none
-
-        Nothing ->
+        SelectingAGame _ ->
             Sub.none
-
-
-subscribeToGameIfOneWasCreated : MazeApi.Webdata MazeApi.GameId -> Cmd Msg
-subscribeToGameIfOneWasCreated response =
-    case response of
-        MazeApi.Success id ->
-            MazeApi.gameSubscription id
-                |> gameUpdates
-
-        _ ->
-            Cmd.none
 
 
 port mazesInformationReceived : (Decode.Value -> msg) -> Sub msg
@@ -129,26 +119,16 @@ view model =
 
 startAGame_ : Model -> Element.Element Msg
 startAGame_ model =
-    case model.gameId of
-        Just gameId ->
-            case gameId of
-                MazeApi.Loading ->
-                    Element.text "creating a game ..."
-
-                MazeApi.Failed ->
-                    Element.text "failed to create a game - please refresh the page and try again"
-
-                MazeApi.Success id ->
-                    Element.column []
-                        [ Element.text <| "GAME ID: " ++ id
-                        , Maybe.map viewGameStatus model.gameStatus |> Maybe.withDefault Element.none
-                        ]
-
-        Nothing ->
+    case model of
+        SelectingAGame _ ->
             Element.Input.button []
                 { onPress = Just StartAGameClicked
                 , label = Element.text "start a game"
                 }
+
+        -- add the available games box loading them here
+        WatchingAGame _ _ ->
+            Element.none
 
 
 viewGameStatus : MazeApi.GameStatus -> Element.Element msg

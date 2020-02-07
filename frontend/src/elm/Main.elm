@@ -75,7 +75,7 @@ update msg model =
 
 decodeMazesInfo : Api.Scalar.Id -> Decode.Value -> Model -> ( Model, Cmd msg )
 decodeMazesInfo gameId gameInfo model =
-    case Decode.decodeValue (MazeApi.gameStatusDecoder2 gameId) gameInfo of
+    case Decode.decodeValue (MazeApi.gameStatusDecoder gameId) gameInfo of
         Ok stuff_ ->
             ( { model | gameInfo2 = Just stuff_ }, Cmd.none )
 

@@ -4,7 +4,7 @@ module MazeApi exposing
     , GameStatus
     , RowOfCells
     , Webdata(..)
-    , gameStatusDecoder2
+    , gameStatusDecoder
     , gameSubscription
     , startAGame
     )
@@ -30,7 +30,7 @@ import Json.Decode as Decode
 
 
 
--- This is the nice data I want to deal with in the app
+-- This is the nice data I want to deal with in the app (similar to but not exactly what the api offers)
 
 
 type alias RowOfCells =
@@ -46,8 +46,13 @@ type alias GameId =
     String
 
 
+type alias GameStatus =
+    { maze : List RowOfCells
+    }
 
--- This is how the nice data gets into the app
+
+
+-- This is web data
 
 
 type Webdata data
@@ -66,36 +71,39 @@ fromResult result =
             Failed
 
 
-type alias GameStatusInternal =
-    { maze : MazeInternal
-    , runners : List RunnerInternal
+
+-- This is how the nice data gets into the app
+
+
+type alias ApiGameStatus =
+    { maze : ApiMaze
+    , runners : List ApiRunner
     }
 
 
-type alias GameStatus =
-    { maze : List RowOfCells
-    }
+type alias ApiMaze =
+    { cells : List ApiCell }
 
 
-type alias RunnerInternal =
+type alias ApiRunner =
     { name : String
-    , position : PositionInternal
+    , position : ApiPosition
     }
 
 
-type alias PositionInternal =
+type alias ApiPosition =
     { column : Int
     , row : Int
     }
 
 
-type alias MazeInternal =
-    { cells : List CellInternal }
+type ApiCell
+    = ApiWall ApiPosition
+    | ApiFloor ApiPosition
 
 
-type CellInternal
-    = WallInternal PositionInternal
-    | FloorInternal PositionInternal
+
+-- Mutations
 
 
 startAGame : (Webdata Api.Scalar.Id -> msg) -> Cmd msg
@@ -106,61 +114,69 @@ startAGame toMsg =
         |> Graphql.Http.send (fromResult >> toMsg)
 
 
-gameStatusDecoder2 : Api.Scalar.Id -> Decode.Decoder GameStatus
-gameStatusDecoder2 id =
-    Graphql.Document.decoder (gameSelection2 id)
-        |> Decode.andThen theOne
 
-
-theOne : GameStatusInternal -> Decode.Decoder GameStatus
-theOne apiThing =
-    Decode.succeed (GameStatus <| makeRows2 apiThing.maze.cells)
-
-
-gameSelection2 : Api.Scalar.Id -> SelectionSet GameStatusInternal RootSubscription
-gameSelection2 gameId =
-    Subscription.gameStatus { gameId = gameId } gameInfoSelection
+-- Subscriptions
 
 
 gameSubscription : Api.Scalar.Id -> String
 gameSubscription gameId =
-    gameSelection gameId
+    gameSubscriptionSelection gameId
         |> Graphql.Document.serializeSubscription
 
 
-gameSelection : Api.Scalar.Id -> SelectionSet GameStatusInternal RootSubscription
-gameSelection gameId =
-    Subscription.gameStatus { gameId = gameId } gameInfoSelection
+
+-- Decoders
 
 
-gameInfoSelection : SelectionSet GameStatusInternal Api.Object.GameStatus
-gameInfoSelection =
-    SelectionSet.succeed GameStatusInternal
+gameStatusDecoder : Api.Scalar.Id -> Decode.Decoder GameStatus
+gameStatusDecoder id =
+    gameSubscriptionSelection id
+        |> SelectionSet.map mapApiGameStatus
+        |> Graphql.Document.decoder
+
+
+mapApiGameStatus : ApiGameStatus -> GameStatus
+mapApiGameStatus apiGameStatus =
+    GameStatus <| mapCellsIntoRows apiGameStatus.maze.cells
+
+
+
+-- Selection sets
+
+
+gameSubscriptionSelection : Api.Scalar.Id -> SelectionSet ApiGameStatus RootSubscription
+gameSubscriptionSelection gameId =
+    Subscription.gameStatus { gameId = gameId } gameSelection
+
+
+gameSelection : SelectionSet ApiGameStatus Api.Object.GameStatus
+gameSelection =
+    SelectionSet.succeed ApiGameStatus
         |> with (Api.Object.GameStatus.maze mazeSelection)
         |> with (Api.Object.GameStatus.playersPositions playerSelection)
 
 
-playerSelection : SelectionSet RunnerInternal Api.Object.PlayerPosition
+playerSelection : SelectionSet ApiRunner Api.Object.PlayerPosition
 playerSelection =
-    SelectionSet.succeed RunnerInternal
+    SelectionSet.succeed ApiRunner
         |> with Api.Object.PlayerPosition.playerName
         |> with (Api.Object.PlayerPosition.position positionSelection)
 
 
-positionSelection : SelectionSet PositionInternal Api.Object.Position
+positionSelection : SelectionSet ApiPosition Api.Object.Position
 positionSelection =
-    SelectionSet.succeed PositionInternal
+    SelectionSet.succeed ApiPosition
         |> with Api.Object.Position.x
         |> with Api.Object.Position.y
 
 
-mazeSelection : SelectionSet MazeInternal Api.Object.Maze
+mazeSelection : SelectionSet ApiMaze Api.Object.Maze
 mazeSelection =
-    SelectionSet.succeed MazeInternal
+    SelectionSet.succeed ApiMaze
         |> with (Api.Object.Maze.cells cellSelection)
 
 
-cellSelection : SelectionSet CellInternal Api.Union.Cell
+cellSelection : SelectionSet ApiCell Api.Union.Cell
 cellSelection =
     Api.Union.Cell.fragments
         { onWall = wallSelection
@@ -168,27 +184,31 @@ cellSelection =
         }
 
 
-wallSelection : SelectionSet CellInternal Api.Object.Wall
+wallSelection : SelectionSet ApiCell Api.Object.Wall
 wallSelection =
-    SelectionSet.succeed WallInternal
+    SelectionSet.succeed ApiWall
         |> with (Api.Object.Wall.position positionSelection)
 
 
-floorSelection : SelectionSet CellInternal Api.Object.Floor
+floorSelection : SelectionSet ApiCell Api.Object.Floor
 floorSelection =
-    SelectionSet.succeed FloorInternal
+    SelectionSet.succeed ApiFloor
         |> with (Api.Object.Floor.position positionSelection)
 
 
-makeRows2 : List CellInternal -> List RowOfCells
-makeRows2 cells =
+
+-- Helpers to map from the data the api returns to the nice data we want to deal with
+
+
+mapCellsIntoRows : List ApiCell -> List RowOfCells
+mapCellsIntoRows cells =
     cells
         |> List.foldl accumulateIntoMapOfRows Dict.empty
         |> Dict.map (\_ apiCells -> fromApiCells apiCells)
         |> Dict.values
 
 
-accumulateIntoMapOfRows : CellInternal -> Dict Int (List CellInternal) -> Dict Int (List CellInternal)
+accumulateIntoMapOfRows : ApiCell -> Dict Int (List ApiCell) -> Dict Int (List ApiCell)
 accumulateIntoMapOfRows apiCell rows =
     let
         rowN =
@@ -196,31 +216,37 @@ accumulateIntoMapOfRows apiCell rows =
     in
     case Dict.get rowN rows of
         Just _ ->
-            Dict.update rowN (\maybeRow -> Maybe.map (\r -> r ++ [ apiCell ]) maybeRow) rows
+            Dict.update rowN (Maybe.map (addIdemToTheEnd apiCell)) rows
 
         Nothing ->
             Dict.insert rowN [ apiCell ] rows
 
 
-fromApiCells : List CellInternal -> List Cell
-fromApiCells cellInternal =
-    cellInternal
-        |> List.map
-            (\c ->
-                case c of
-                    FloorInternal _ ->
-                        Floor
-
-                    WallInternal _ ->
-                        Wall
-            )
-
-
-getRow : CellInternal -> Int
+getRow : ApiCell -> Int
 getRow cell_ =
     case cell_ of
-        WallInternal position ->
+        ApiWall position ->
             position.row
 
-        FloorInternal position ->
+        ApiFloor position ->
             position.row
+
+
+addIdemToTheEnd : a -> List a -> List a
+addIdemToTheEnd thingToAdd thingToAddTo =
+    thingToAddTo ++ [ thingToAdd ]
+
+
+fromApiCells : List ApiCell -> List Cell
+fromApiCells =
+    List.map fromApiCell
+
+
+fromApiCell : ApiCell -> Cell
+fromApiCell apiCell =
+    case apiCell of
+        ApiFloor _ ->
+            Floor
+
+        ApiWall _ ->
+            Wall

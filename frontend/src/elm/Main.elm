@@ -29,7 +29,7 @@ main =
 
 type alias Model =
     { gameId : Maybe (MazeApi.Webdata MazeApi.GameId)
-    , gameInfo2 : Maybe MazeApi.GameStatus
+    , gameStatus : Maybe MazeApi.GameStatus
     }
 
 
@@ -51,7 +51,7 @@ init _ =
 initialModel : Model
 initialModel =
     { gameId = Nothing
-    , gameInfo2 = Nothing
+    , gameStatus = Nothing
     }
 
 
@@ -63,7 +63,7 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         MazesInformationReceived gameId mazesInfo ->
-            decodeMazesInfo gameId mazesInfo model
+            decodeGameStatus gameId mazesInfo model
 
         StartAGameClicked ->
             ( model, MazeApi.startAGame StartAGameResponseReceived )
@@ -72,11 +72,11 @@ update msg model =
             ( { model | gameId = Just response }, subscribeToGameIfOneWasCreated response )
 
 
-decodeMazesInfo : MazeApi.GameId -> Decode.Value -> Model -> ( Model, Cmd msg )
-decodeMazesInfo gameId gameInfo model =
-    case Decode.decodeValue (MazeApi.gameStatusDecoder gameId) gameInfo of
-        Ok stuff_ ->
-            ( { model | gameInfo2 = Just stuff_ }, Cmd.none )
+decodeGameStatus : MazeApi.GameId -> Decode.Value -> Model -> ( Model, Cmd msg )
+decodeGameStatus gameId rawGameStatus model =
+    case Decode.decodeValue (MazeApi.gameStatusDecoder gameId) rawGameStatus of
+        Ok gameStatus_ ->
+            ( { model | gameStatus = Just gameStatus_ }, Cmd.none )
 
         Err _ ->
             ( model, Cmd.none )
@@ -141,7 +141,7 @@ startAGame_ model =
                 MazeApi.Success id ->
                     Element.column []
                         [ Element.text <| "GAME ID: " ++ id
-                        , Maybe.map viewMaze2 model.gameInfo2 |> Maybe.withDefault Element.none
+                        , Maybe.map viewGameStatus model.gameStatus |> Maybe.withDefault Element.none
                         ]
 
         Nothing ->
@@ -151,8 +151,8 @@ startAGame_ model =
                 }
 
 
-viewMaze2 : MazeApi.GameStatus -> Element.Element msg
-viewMaze2 gameStatus =
+viewGameStatus : MazeApi.GameStatus -> Element.Element msg
+viewGameStatus gameStatus =
     gameStatus.maze
         |> List.map viewRow
         |> Element.column []

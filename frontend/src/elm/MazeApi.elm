@@ -51,6 +51,11 @@ type alias GameStatus =
     }
 
 
+toGameId : Api.Scalar.Id -> GameId
+toGameId (Api.Scalar.Id apiGameID) =
+    apiGameID
+
+
 
 -- This is web data
 
@@ -104,21 +109,22 @@ type ApiCell
 
 
 -- Mutations
+--  (Result error data -> Webdata data)  ->
 
 
-startAGame : (Webdata Api.Scalar.Id -> msg) -> Cmd msg
+startAGame : (Webdata GameId -> msg) -> Cmd msg
 startAGame toMsg =
     Graphql.Http.mutationRequest
         "http://localhost:8080/graphql"
         Api.Mutation.startAGame
-        |> Graphql.Http.send (fromResult >> toMsg)
+        |> Graphql.Http.send (Result.map toGameId >> fromResult >> toMsg)
 
 
 
 -- Subscriptions
 
 
-gameSubscription : Api.Scalar.Id -> String
+gameSubscription : GameId -> String
 gameSubscription gameId =
     gameSubscriptionSelection gameId
         |> Graphql.Document.serializeSubscription
@@ -128,7 +134,7 @@ gameSubscription gameId =
 -- Decoders
 
 
-gameStatusDecoder : Api.Scalar.Id -> Decode.Decoder GameStatus
+gameStatusDecoder : GameId -> Decode.Decoder GameStatus
 gameStatusDecoder id =
     gameSubscriptionSelection id
         |> SelectionSet.map mapApiGameStatus
@@ -144,9 +150,9 @@ mapApiGameStatus apiGameStatus =
 -- Selection sets
 
 
-gameSubscriptionSelection : Api.Scalar.Id -> SelectionSet ApiGameStatus RootSubscription
+gameSubscriptionSelection : GameId -> SelectionSet ApiGameStatus RootSubscription
 gameSubscriptionSelection gameId =
-    Subscription.gameStatus { gameId = gameId } gameSelection
+    Subscription.gameStatus { gameId = Api.Scalar.Id gameId } gameSelection
 
 
 gameSelection : SelectionSet ApiGameStatus Api.Object.GameStatus

@@ -1,6 +1,5 @@
 port module Main exposing (main)
 
-import Api.Scalar exposing (Id)
 import Browser
 import Element
 import Element.Background
@@ -29,15 +28,15 @@ main =
 
 
 type alias Model =
-    { gameId : Maybe (MazeApi.Webdata Api.Scalar.Id)
+    { gameId : Maybe (MazeApi.Webdata MazeApi.GameId)
     , gameInfo2 : Maybe MazeApi.GameStatus
     }
 
 
 type Msg
-    = MazesInformationReceived Api.Scalar.Id Decode.Value
+    = MazesInformationReceived MazeApi.GameId Decode.Value
     | StartAGameClicked
-    | StartAGameResponseReceived (MazeApi.Webdata Api.Scalar.Id)
+    | StartAGameResponseReceived (MazeApi.Webdata MazeApi.GameId)
 
 
 
@@ -73,7 +72,7 @@ update msg model =
             ( { model | gameId = Just response }, subscribeToGameIfOneWasCreated response )
 
 
-decodeMazesInfo : Api.Scalar.Id -> Decode.Value -> Model -> ( Model, Cmd msg )
+decodeMazesInfo : MazeApi.GameId -> Decode.Value -> Model -> ( Model, Cmd msg )
 decodeMazesInfo gameId gameInfo model =
     case Decode.decodeValue (MazeApi.gameStatusDecoder gameId) gameInfo of
         Ok stuff_ ->
@@ -102,7 +101,7 @@ subscriptions model =
             Sub.none
 
 
-subscribeToGameIfOneWasCreated : MazeApi.Webdata Api.Scalar.Id -> Cmd Msg
+subscribeToGameIfOneWasCreated : MazeApi.Webdata MazeApi.GameId -> Cmd Msg
 subscribeToGameIfOneWasCreated response =
     case response of
         MazeApi.Success id ->
@@ -139,7 +138,7 @@ startAGame_ model =
                 MazeApi.Failed ->
                     Element.text "failed to create a game - please refresh the page and try again"
 
-                MazeApi.Success (Api.Scalar.Id id) ->
+                MazeApi.Success id ->
                     Element.column []
                         [ Element.text <| "GAME ID: " ++ id
                         , Maybe.map viewMaze2 model.gameInfo2 |> Maybe.withDefault Element.none

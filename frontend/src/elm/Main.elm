@@ -31,7 +31,7 @@ type Model
 type Msg
     = MazesInformationReceived MazeApi.GameId Decode.Value
     | StartAGameClicked
-    | StartAGameResponseReceived (MazeApi.Webdata MazeApi.GameId)
+    | StartAGameResponseReceived (Result () MazeApi.GameId)
 
 
 
@@ -65,16 +65,13 @@ update msg model =
             handleGameCreationResponse response
 
 
+handleGameCreationResponse : Result () MazeApi.GameId -> ( Model, Cmd msg )
 handleGameCreationResponse response =
     case response of
-        MazeApi.Success gameId ->
+        Ok gameId ->
             ( WatchingAGame gameId MazeApi.Loading, Cmd.none )
 
-        -- can we make this disappear?
-        MazeApi.Loading ->
-            ( SelectingAGame MazeApi.Loading, Cmd.none )
-
-        MazeApi.Failed ->
+        Err _ ->
             ( SelectingAGame MazeApi.Loading, Cmd.none )
 
 
@@ -82,7 +79,7 @@ decodeGameStatus : MazeApi.GameId -> Decode.Value -> Model -> ( Model, Cmd msg )
 decodeGameStatus gameId rawGameStatus model =
     case Decode.decodeValue (MazeApi.gameStatusDecoder gameId) rawGameStatus of
         Ok gameStatus_ ->
-            ( WatchingAGame gameId (MazeApi.Success gameStatus_), Cmd.none )
+            ( WatchingAGame gameId (MazeApi.Loaded gameStatus_), Cmd.none )
 
         Err _ ->
             ( model, Cmd.none )

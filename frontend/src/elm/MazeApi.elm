@@ -63,17 +63,7 @@ toGameId (Api.Scalar.Id apiGameID) =
 type Webdata data
     = Loading
     | Failed
-    | Success data
-
-
-fromResult : Result error data -> Webdata data
-fromResult result =
-    case result of
-        Ok data ->
-            Success data
-
-        Err _ ->
-            Failed
+    | Loaded data
 
 
 
@@ -109,15 +99,14 @@ type ApiCell
 
 
 -- Mutations
---  (Result error data -> Webdata data)  ->
 
 
-startAGame : (Webdata GameId -> msg) -> Cmd msg
+startAGame : (Result () GameId -> msg) -> Cmd msg
 startAGame toMsg =
     Graphql.Http.mutationRequest
         "http://localhost:8080/graphql"
         Api.Mutation.startAGame
-        |> Graphql.Http.send (Result.map toGameId >> fromResult >> toMsg)
+        |> Graphql.Http.send (Result.map toGameId >> Result.mapError (always ()) >> toMsg)
 
 
 

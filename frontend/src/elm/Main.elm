@@ -30,6 +30,7 @@ type Model
 
 type Msg
     = MazesInformationReceived MazeApi.GameId Decode.Value
+    | ExistingGamesResponseReceived (Result () (List MazeApi.GameId))
     | StartAGameClicked
     | StartAGameResponseReceived (Result () MazeApi.GameId)
 
@@ -40,7 +41,7 @@ type Msg
 
 init : () -> ( Model, Cmd Msg )
 init _ =
-    ( initialModel, Cmd.none )
+    ( initialModel, MazeApi.fetchExistingGames ExistingGamesResponseReceived )
 
 
 initialModel : Model
@@ -63,6 +64,9 @@ update msg model =
 
         StartAGameResponseReceived response ->
             handleGameCreationResponse response
+
+        ExistingGamesResponseReceived response ->
+            ( SelectingAGame <| MazeApi.fromResult response, Cmd.none )
 
 
 handleGameCreationResponse : Result () MazeApi.GameId -> ( Model, Cmd msg )
@@ -117,15 +121,32 @@ view model =
 view_ : Model -> Element.Element Msg
 view_ model =
     case model of
-        SelectingAGame _ ->
-            Element.Input.button []
-                { onPress = Just StartAGameClicked
-                , label = Element.text "start a game"
-                }
+        SelectingAGame gamesAvailable ->
+            Element.column []
+                [ Element.Input.button []
+                    { onPress = Just StartAGameClicked
+                    , label = Element.text "start a game"
+                    }
+                , viewGamesAvailable gamesAvailable
+                ]
 
-        -- add the available games box loading them here
         WatchingAGame _ _ ->
             Element.none
+
+
+viewGamesAvailable : MazeApi.Webdata (List MazeApi.GameId) -> Element.Element msg
+viewGamesAvailable gamesAvailable =
+    case gamesAvailable of
+        MazeApi.Loading ->
+            Element.text "Loading existing games"
+
+        MazeApi.Failed ->
+            Element.text "Could not load existing games"
+
+        MazeApi.Loaded gameIds ->
+            Element.column [] <|
+                Element.text "vvvvvvv Join an existing game vvvvvvv"
+                    :: List.map (\id -> Element.text (MazeApi.toString id)) gameIds
 
 
 viewGameStatus : MazeApi.GameStatus -> Element.Element msg

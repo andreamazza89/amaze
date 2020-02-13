@@ -31,6 +31,9 @@ object GameRepository {
     fun findGameWithMaze(mazeId: MazeId): Result<Game, MazeNotFoundError> {
         return Ok(games.values.find { it.mazes.find { it.id == mazeId } != null }!!)
     }
+
+    fun findAll(): List<Game> =
+        games.values.toList()
 }
 
 object GameNotFoundError

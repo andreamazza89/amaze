@@ -4,9 +4,12 @@ module MazeApi exposing
     , GameStatus
     , RowOfCells
     , Webdata(..)
+    , fetchExistingGames
+    , fromResult
     , gameStatusDecoder
     , gameSubscription
     , startAGame
+    , toString
     )
 
 import Api.Mutation
@@ -17,6 +20,7 @@ import Api.Object.Maze
 import Api.Object.PlayerPosition
 import Api.Object.Position
 import Api.Object.Wall
+import Api.Query
 import Api.Scalar
 import Api.Subscription as Subscription
 import Api.Union
@@ -42,8 +46,17 @@ type Cell
     | Floor -- ideally this will carry a list of players
 
 
+
+-- Would like to make this opaque
+
+
 type alias GameId =
     String
+
+
+toString : GameId -> String
+toString gameId_ =
+    gameId_
 
 
 type alias GameStatus =
@@ -64,6 +77,16 @@ type Webdata data
     = Loading
     | Failed
     | Loaded data
+
+
+fromResult : Result error data -> Webdata data
+fromResult result =
+    case result of
+        Ok data ->
+            Loaded data
+
+        Err _ ->
+            Failed
 
 
 
@@ -95,6 +118,16 @@ type alias ApiPosition =
 type ApiCell
     = ApiWall ApiPosition
     | ApiFloor ApiPosition
+
+
+
+-- Queries
+
+
+fetchExistingGames : (Result () (List GameId) -> msg) -> Cmd msg
+fetchExistingGames toMsg =
+    Graphql.Http.queryRequest "http://localhost:8080/graphql" Api.Query.gamesAvailable
+        |> Graphql.Http.send (Result.map (List.map toGameId) >> Result.mapError (always ()) >> toMsg)
 
 
 

@@ -67,6 +67,12 @@ class GameInfo(@Autowired val getAMaze: GetAMaze) : GraphQLQueryResolver {
     }
 }
 
+@Component
+class GamesAvailable : GraphQLQueryResolver {
+    fun gamesAvailable(): List<GameId> =
+        GameRepository.findAll().map(Game::id)
+}
+
 private fun toMazeInfoResponseFromResult(findMazeResult: Result<Maze, MazeNotFoundError>): GameInfoResponse =
     when (findMazeResult) {
         is Ok -> toMazeInfoResponse(findMazeResult.okValue)

@@ -111,11 +111,11 @@ port gameUpdates : String -> Cmd msg
 
 view : Model -> Html Msg
 view model =
-    Element.layout [] <| startAGame_ model
+    Element.layout [] <| view_ model
 
 
-startAGame_ : Model -> Element.Element Msg
-startAGame_ model =
+view_ : Model -> Element.Element Msg
+view_ model =
     case model of
         SelectingAGame _ ->
             Element.Input.button []

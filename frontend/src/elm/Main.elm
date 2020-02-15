@@ -30,7 +30,8 @@ type Model
 
 
 type Msg
-    = MazesInformationReceived MazeApi.GameId Decode.Value
+    = RawGameStatusReceived MazeApi.GameId Decode.Value
+    | GameStatusResponseReceived MazeApi.GameId (Result () MazeApi.GameStatus)
     | ExistingGamesResponseReceived (Result () (List MazeApi.GameId))
     | StartAGameClicked
     | StartAGameResponseReceived (Result () MazeApi.GameId)
@@ -57,7 +58,7 @@ initialModel =
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        MazesInformationReceived gameId mazesInfo ->
+        RawGameStatusReceived gameId mazesInfo ->
             decodeGameStatus gameId mazesInfo model
 
         StartAGameClicked ->
@@ -69,12 +70,15 @@ update msg model =
         ExistingGamesResponseReceived response ->
             ( SelectingAGame <| MazeApi.fromResult response, Cmd.none )
 
+        GameStatusResponseReceived gameId response ->
+            ( WatchingAGame gameId <| MazeApi.fromResult response, Cmd.none )
 
-handleGameCreationResponse : Result () MazeApi.GameId -> ( Model, Cmd msg )
+
+handleGameCreationResponse : Result () MazeApi.GameId -> ( Model, Cmd Msg )
 handleGameCreationResponse response =
     case response of
         Ok gameId ->
-            ( WatchingAGame gameId MazeApi.Loading, Cmd.none )
+            ( WatchingAGame gameId MazeApi.Loading, MazeApi.gameStatus gameId (GameStatusResponseReceived gameId) )
 
         Err _ ->
             ( SelectingAGame MazeApi.Loading, Cmd.none )
@@ -98,7 +102,7 @@ subscriptions : Model -> Sub Msg
 subscriptions model =
     case model of
         WatchingAGame gameId _ ->
-            mazesInformationReceived <| MazesInformationReceived gameId
+            mazesInformationReceived <| RawGameStatusReceived gameId
 
         SelectingAGame _ ->
             Sub.none

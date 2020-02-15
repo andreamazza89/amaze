@@ -6,6 +6,7 @@ module MazeApi exposing
     , Webdata(..)
     , fetchExistingGames
     , fromResult
+    , gameStatus
     , gameStatusDecoder
     , gameSubscription
     , startAGame
@@ -126,8 +127,16 @@ type ApiCell
 
 fetchExistingGames : (Result () (List GameId) -> msg) -> Cmd msg
 fetchExistingGames toMsg =
-    Graphql.Http.queryRequest "http://localhost:8080/graphql" Api.Query.gamesAvailable
+    Api.Query.gamesAvailable
+        |> Graphql.Http.queryRequest "http://localhost:8080/graphql"
         |> Graphql.Http.send (Result.map (List.map toGameId) >> Result.mapError (always ()) >> toMsg)
+
+
+gameStatus : GameId -> (Result () GameStatus -> msg) -> Cmd msg
+gameStatus gameId toMsg =
+    Api.Query.gameStatus { gameId = Api.Scalar.Id gameId } gameSelection
+        |> Graphql.Http.queryRequest "http://localhost:8080/graphql"
+        |> Graphql.Http.send (Result.mapError (always ()) >> Result.map mapApiGameStatus >> toMsg)
 
 
 

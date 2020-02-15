@@ -1,5 +1,6 @@
 type Query {
     gameInfo(gameId: ID!, playerName: String!): GameInfo!
+    gameStatus(gameId: ID!): GameStatus!
     gamesAvailable: [ID!]!
 }
 

@@ -14,6 +14,7 @@ import com.andreamazzarella.amaze.core.usecases.TakeAStep
 import com.andreamazzarella.amaze.core.usecases.TakeAStepError
 import com.andreamazzarella.amaze.core.Wall
 import com.andreamazzarella.amaze.core.usecases.AddAPlayer
+import com.andreamazzarella.amaze.core.usecases.GetAGame
 import com.andreamazzarella.amaze.core.usecases.StartAGame
 import com.andreamazzarella.amaze.core.usecases.TakeAStep2
 import com.andreamazzarella.amaze.core.usecases.TakeAStep2Error
@@ -23,6 +24,7 @@ import com.andreamazzarella.amaze.persistence.MazeRepository
 import com.andreamazzarella.amaze.utils.Err
 import com.andreamazzarella.amaze.utils.Ok
 import com.andreamazzarella.amaze.utils.Result
+import com.andreamazzarella.amaze.utils.okOrFail
 import com.andreamazzarella.amaze.utils.pipe
 import com.andreamazzarella.amaze.utils.runOnOk
 import com.coxautodev.graphql.tools.GraphQLMutationResolver
@@ -65,6 +67,14 @@ class GameInfo(@Autowired val getAMaze: GetAMaze) : GraphQLQueryResolver {
     fun gameInfo(gameId: GameId, playerName: String): GameInfoResponse {
         TODO()
     }
+}
+
+@Component
+class GameStatus(@Autowired val getAMaze: GetAMaze) : GraphQLQueryResolver {
+    fun gameStatus(gameId: GameId): GameStatusResponse =
+        GetAGame.doIt(gameId)
+            .okOrFail() // Game Status Response should be the union of a successful response and a game not found
+            .pipe(::toGameStatusResponse)
 }
 
 @Component
@@ -114,14 +124,16 @@ class AddAPlayerResolver(@Autowired val gamePublisherThing: GamePublishersThing)
         return response
     }
 
-    fun toGameStatusResponse(game: Game) =
-        GameStatusResponse(
-            MazeResponse(toCellsResponse(game.maze)),
-            game.playersPositions().map(::toPlayerPositionResponse)
-        )
-    fun toPlayerPositionResponse(player: Pair<String, Position>) =
-        PlayerPositionResponse(player.first, toPositionResponse(player.second))
 }
+
+fun toGameStatusResponse(game: Game) =
+    GameStatusResponse(
+        MazeResponse(toCellsResponse(game.maze)),
+        game.playersPositions().map(::toPlayerPositionResponse)
+    )
+
+fun toPlayerPositionResponse(player: Pair<String, Position>) =
+    PlayerPositionResponse(player.first, toPositionResponse(player.second))
 
 
 typealias GameId = String

@@ -150,7 +150,10 @@ view_ model =
                     Element.text "there was an error loading your game - please refresh the page and try again"
 
                 MazeApi.Loaded gameStatus_ ->
-                    viewGameStatus gameStatus_
+                    Element.column []
+                        [ Element.text <| "watching game " ++ MazeApi.toString gameId
+                        , viewGameStatus gameStatus_
+                        ]
 
 
 viewGamesAvailable : MazeApi.Webdata (List MazeApi.GameId) -> Element.Element msg
@@ -186,7 +189,7 @@ viewCell cell_ =
         MazeApi.Wall ->
             darkCell
 
-        MazeApi.Floor ->
+        MazeApi.Floor _ ->
             lightCell
 
 

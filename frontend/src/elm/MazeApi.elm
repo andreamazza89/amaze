@@ -44,7 +44,20 @@ type alias RowOfCells =
 
 type Cell
     = Wall
-    | Floor -- ideally this will carry a list of players
+    | Floor (List Player)
+
+
+type Player
+    = Player PlayerDetails
+
+
+type alias PlayerDetails =
+    { name : String }
+
+
+buildPlayer : String -> Player
+buildPlayer name =
+    Player { name = name }
 
 
 
@@ -174,7 +187,7 @@ gameStatusDecoder id =
 
 mapApiGameStatus : ApiGameStatus -> GameStatus
 mapApiGameStatus apiGameStatus =
-    GameStatus <| mapCellsIntoRows apiGameStatus.maze.cells
+    GameStatus <| mapCellsIntoRows apiGameStatus
 
 
 
@@ -234,11 +247,11 @@ floorSelection =
 -- Helpers to map from the data the api returns to the nice data we want to deal with
 
 
-mapCellsIntoRows : List ApiCell -> List RowOfCells
-mapCellsIntoRows cells =
-    cells
+mapCellsIntoRows : ApiGameStatus -> List RowOfCells
+mapCellsIntoRows { runners, maze } =
+    maze.cells
         |> List.foldl accumulateIntoMapOfRows Dict.empty
-        |> Dict.map (\_ apiCells -> fromApiCells apiCells)
+        |> Dict.map (\_ apiCells -> fromApiCells runners apiCells)
         |> Dict.values
 
 
@@ -271,16 +284,23 @@ addIdemToTheEnd thingToAdd thingToAddTo =
     thingToAddTo ++ [ thingToAdd ]
 
 
-fromApiCells : List ApiCell -> List Cell
-fromApiCells =
-    List.map fromApiCell
+fromApiCells : List ApiRunner -> List ApiCell -> List Cell
+fromApiCells runners =
+    List.map <| fromApiCell runners
 
 
-fromApiCell : ApiCell -> Cell
-fromApiCell apiCell =
+fromApiCell : List ApiRunner -> ApiCell -> Cell
+fromApiCell runners apiCell =
     case apiCell of
-        ApiFloor _ ->
-            Floor
+        ApiFloor cellPosition ->
+            Floor <| addRunnersToCell runners cellPosition
 
         ApiWall _ ->
             Wall
+
+
+addRunnersToCell : List ApiRunner -> ApiPosition -> List Player
+addRunnersToCell runners cellPosition =
+    runners
+        |> List.filter (\r -> r.position == cellPosition)
+        |> List.map (\r -> buildPlayer r.name)

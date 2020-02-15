@@ -4,6 +4,7 @@ import Browser
 import Element
 import Element.Background
 import Element.Input
+import Element.LoadingSpinner
 import Html exposing (Html)
 import Json.Decode as Decode
 import MazeApi
@@ -127,11 +128,23 @@ view_ model =
                     { onPress = Just StartAGameClicked
                     , label = Element.text "start a game"
                     }
+                , Element.text "---------------"
                 , viewGamesAvailable gamesAvailable
                 ]
 
-        WatchingAGame _ _ ->
-            Element.none
+        WatchingAGame gameId gameStatus ->
+            case gameStatus of
+                MazeApi.Loading ->
+                    Element.row []
+                        [ Element.text <| "loading your game (" ++ MazeApi.toString gameId ++ ") "
+                        , Element.LoadingSpinner.spinner
+                        ]
+
+                MazeApi.Failed ->
+                    Element.text "there was an error loading your game - please refresh the page and try again"
+
+                MazeApi.Loaded data ->
+                    Element.text "placeholder for watching a game"
 
 
 viewGamesAvailable : MazeApi.Webdata (List MazeApi.GameId) -> Element.Element msg

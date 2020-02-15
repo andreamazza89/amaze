@@ -30,7 +30,7 @@ import Dict exposing (Dict)
 import Graphql.Document
 import Graphql.Http
 import Graphql.Operation exposing (RootSubscription)
-import Graphql.SelectionSet as SelectionSet exposing (SelectionSet, with)
+import Graphql.SelectionSet as SelectionSet exposing (SelectionSet)
 import Json.Decode as Decode
 
 
@@ -188,29 +188,28 @@ gameSubscriptionSelection gameId =
 
 gameSelection : SelectionSet ApiGameStatus Api.Object.GameStatus
 gameSelection =
-    SelectionSet.succeed ApiGameStatus
-        |> with (Api.Object.GameStatus.maze mazeSelection)
-        |> with (Api.Object.GameStatus.playersPositions playerSelection)
+    SelectionSet.map2 ApiGameStatus
+        (Api.Object.GameStatus.maze mazeSelection)
+        (Api.Object.GameStatus.playersPositions playerSelection)
 
 
 playerSelection : SelectionSet ApiRunner Api.Object.PlayerPosition
 playerSelection =
-    SelectionSet.succeed ApiRunner
-        |> with Api.Object.PlayerPosition.playerName
-        |> with (Api.Object.PlayerPosition.position positionSelection)
+    SelectionSet.map2 ApiRunner
+        Api.Object.PlayerPosition.playerName
+        (Api.Object.PlayerPosition.position positionSelection)
 
 
 positionSelection : SelectionSet ApiPosition Api.Object.Position
 positionSelection =
-    SelectionSet.succeed ApiPosition
-        |> with Api.Object.Position.x
-        |> with Api.Object.Position.y
+    SelectionSet.map2 ApiPosition
+        Api.Object.Position.x
+        Api.Object.Position.y
 
 
 mazeSelection : SelectionSet ApiMaze Api.Object.Maze
 mazeSelection =
-    SelectionSet.succeed ApiMaze
-        |> with (Api.Object.Maze.cells cellSelection)
+    SelectionSet.map ApiMaze (Api.Object.Maze.cells cellSelection)
 
 
 cellSelection : SelectionSet ApiCell Api.Union.Cell
@@ -223,14 +222,12 @@ cellSelection =
 
 wallSelection : SelectionSet ApiCell Api.Object.Wall
 wallSelection =
-    SelectionSet.succeed ApiWall
-        |> with (Api.Object.Wall.position positionSelection)
+    SelectionSet.map ApiWall (Api.Object.Wall.position positionSelection)
 
 
 floorSelection : SelectionSet ApiCell Api.Object.Floor
 floorSelection =
-    SelectionSet.succeed ApiFloor
-        |> with (Api.Object.Floor.position positionSelection)
+    SelectionSet.map ApiFloor (Api.Object.Floor.position positionSelection)
 
 
 

@@ -29,6 +29,12 @@ type Model
     | SelectingAGame (MazeApi.Webdata (List MazeApi.GameId))
 
 
+
+-- Idea - perhaps I should segregate WatchingAGame and SelectingAGame messages?
+-- so the union would be type Msg = WatchingMsg WatchingAGameMsg | SelectingMsg SelectingAGameMsg
+-- that would possibly clean the update function
+
+
 type Msg
     = RawGameStatusReceived MazeApi.GameId Decode.Value
     | GameStatusResponseReceived MazeApi.GameId (Result () MazeApi.GameStatus)
@@ -71,7 +77,7 @@ update msg model =
             ( SelectingAGame <| MazeApi.fromResult response, Cmd.none )
 
         GameStatusResponseReceived gameId response ->
-            ( WatchingAGame gameId <| MazeApi.fromResult response, Cmd.none )
+            ( WatchingAGame gameId <| MazeApi.fromResult response, subscribeToGameUpdates gameId )
 
 
 handleGameCreationResponse : Result () MazeApi.GameId -> ( Model, Cmd Msg )
@@ -98,6 +104,11 @@ decodeGameStatus gameId rawGameStatus model =
 
 
 -- Subscriptions
+
+
+subscribeToGameUpdates : MazeApi.GameId -> Cmd msg
+subscribeToGameUpdates gameId =
+    gameUpdates <| MazeApi.gameSubscription gameId
 
 
 subscriptions : Model -> Sub Msg

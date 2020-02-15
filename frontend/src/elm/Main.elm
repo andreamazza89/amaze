@@ -78,10 +78,12 @@ handleGameCreationResponse : Result () MazeApi.GameId -> ( Model, Cmd Msg )
 handleGameCreationResponse response =
     case response of
         Ok gameId ->
-            ( WatchingAGame gameId MazeApi.Loading, MazeApi.gameStatus gameId (GameStatusResponseReceived gameId) )
+            ( WatchingAGame gameId MazeApi.Loading
+            , MazeApi.gameStatus gameId (GameStatusResponseReceived gameId)
+            )
 
         Err _ ->
-            ( SelectingAGame MazeApi.Loading, Cmd.none )
+            ( SelectingAGame MazeApi.Failed, Cmd.none )
 
 
 decodeGameStatus : MazeApi.GameId -> Decode.Value -> Model -> ( Model, Cmd msg )
@@ -147,8 +149,8 @@ view_ model =
                 MazeApi.Failed ->
                     Element.text "there was an error loading your game - please refresh the page and try again"
 
-                MazeApi.Loaded data ->
-                    Element.text "placeholder for watching a game"
+                MazeApi.Loaded gameStatus_ ->
+                    viewGameStatus gameStatus_
 
 
 viewGamesAvailable : MazeApi.Webdata (List MazeApi.GameId) -> Element.Element msg

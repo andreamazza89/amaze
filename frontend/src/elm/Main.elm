@@ -200,26 +200,57 @@ viewCell cell_ =
         MazeApi.Wall ->
             darkCell
 
-        MazeApi.Floor _ ->
-            lightCell
+        MazeApi.Floor players ->
+            lightCell players
 
 
 darkCell : Element.Element msg
 darkCell =
-    cell [ Element.Background.color <| Element.rgb255 0 0 0 ]
+    emptyCell [ Element.Background.color <| Element.rgb255 0 0 0 ]
 
 
-lightCell : Element.Element msg
-lightCell =
-    cell [ Element.Background.color <| Element.rgb255 255 255 255 ]
+lightCell : List MazeApi.Playa -> Element.Element msg
+lightCell players =
+    if List.isEmpty players then
+        emptyCell [ Element.Background.color <| Element.rgb255 255 255 255 ]
+
+    else
+        List.map (\p -> Element.el [ Element.width Element.fill, Element.height Element.fill, Element.Background.color <| toColour <| MazeApi.colour p ] Element.none) players
+            |> Element.row [ Element.width Element.fill, Element.height Element.fill ]
+            |> Just
+            |> cell []
 
 
-cell : List (Element.Attribute msg) -> Element.Element msg
-cell attributes =
+toColour : MazeApi.PlayerColour -> Element.Color
+toColour playerColour =
+    case playerColour of
+        MazeApi.Blue ->
+            Element.rgb255 24 24 249
+
+        MazeApi.Red ->
+            Element.rgb255 249 24 24
+
+        MazeApi.Green ->
+            Element.rgb255 18 253 87
+
+        MazeApi.Purple ->
+            Element.rgb255 180 23 228
+
+        MazeApi.Brown ->
+            Element.rgb255 88 69 16
+
+
+cell : List (Element.Attribute msg) -> Maybe (Element.Element msg) -> Element.Element msg
+cell attributes element =
     Element.el
         ([ Element.width (Element.fill |> Element.minimum 25)
          , Element.height (Element.fill |> Element.minimum 25)
          ]
             ++ attributes
         )
-        Element.none
+        (Maybe.withDefault Element.none element)
+
+
+emptyCell : List (Element.Attribute msg) -> Element.Element msg
+emptyCell attributes =
+    cell attributes Nothing

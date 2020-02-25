@@ -2,8 +2,11 @@ module MazeApi exposing
     ( Cell(..)
     , GameId
     , GameStatus
+    , Playa
+    , PlayerColour(..)
     , RowOfCells
     , Webdata(..)
+    , colour
     , fetchExistingGames
     , fromResult
     , gameStatus
@@ -92,8 +95,13 @@ buildPlayas playerNames =
 
 
 buildPlaya : ( String, PlayerColour ) -> Playa
-buildPlaya ( name, colour ) =
-    Playa { name = name, colour = colour }
+buildPlaya ( name, colour_ ) =
+    Playa { name = name, colour = colour_ }
+
+
+colour : Playa -> PlayerColour
+colour (Playa details) =
+    .colour details
 
 
 type alias GameId =

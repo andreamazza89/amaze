@@ -6,12 +6,14 @@ module MazeApi exposing
     , PlayerColour(..)
     , RowOfCells
     , Webdata(..)
+    , allPlayersInAGame
     , colour
     , fetchExistingGames
     , fromResult
     , gameStatus
     , gameStatusDecoder
     , gameSubscription
+    , name
     , startAGame
     , toString
     )
@@ -95,13 +97,18 @@ buildPlayas playerNames =
 
 
 buildPlaya : ( String, PlayerColour ) -> Playa
-buildPlaya ( name, colour_ ) =
-    Playa { name = name, colour = colour_ }
+buildPlaya ( name_, colour_ ) =
+    Playa { name = name_, colour = colour_ }
 
 
 colour : Playa -> PlayerColour
 colour (Playa details) =
     .colour details
+
+
+name : Playa -> String
+name (Playa details) =
+    .name details
 
 
 type alias GameId =
@@ -115,8 +122,30 @@ toString gameId_ =
 
 
 type alias GameStatus =
+    -- Also would probably like to make this opaque
     { maze : List RowOfCells
     }
+
+
+allPlayersInAGame : GameStatus -> List Playa
+allPlayersInAGame gameStatus_ =
+    List.foldl allPlayersInARow [] gameStatus_.maze
+
+
+allPlayersInARow : RowOfCells -> List Playa -> List Playa
+allPlayersInARow row playersFromOtherRows =
+    List.foldl allPlayersInACell [] row
+        |> List.append playersFromOtherRows
+
+
+allPlayersInACell : Cell -> List Playa -> List Playa
+allPlayersInACell cell playersOnThisRow =
+    case cell of
+        Wall ->
+            playersOnThisRow
+
+        Floor playersOnThisCell ->
+            playersOnThisRow ++ playersOnThisCell
 
 
 toGameId : Api.Scalar.Id -> GameId

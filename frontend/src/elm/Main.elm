@@ -1,8 +1,10 @@
 port module Main exposing (main)
 
 import Browser
-import Element
-import Element.Background
+import Element exposing (fill, height, width)
+import Element.Background as Background
+import Element.Colours as Element
+import Element.Font as Font
 import Element.Input
 import Element.LoadingSpinner
 import Html exposing (Html)
@@ -164,6 +166,7 @@ view_ model =
                     Element.column []
                         [ Element.text <| "watching game " ++ MazeApi.toString gameId
                         , viewGameStatus gameStatus_
+                        , viewPlayers gameStatus_
                         ]
 
 
@@ -198,59 +201,81 @@ viewCell : MazeApi.Cell -> Element.Element msg
 viewCell cell_ =
     case cell_ of
         MazeApi.Wall ->
-            darkCell
+            wall
 
         MazeApi.Floor players ->
-            lightCell players
+            floor players
 
 
-darkCell : Element.Element msg
-darkCell =
-    emptyCell [ Element.Background.color <| Element.rgb255 0 0 0 ]
+wall : Element.Element msg
+wall =
+    emptyCell [ Background.color Element.black ]
 
 
-lightCell : List MazeApi.Playa -> Element.Element msg
-lightCell players =
+floor : List MazeApi.Playa -> Element.Element msg
+floor players =
     if List.isEmpty players then
-        emptyCell [ Element.Background.color <| Element.rgb255 255 255 255 ]
+        emptyCell [ Background.color Element.white ]
 
     else
-        List.map (\p -> Element.el [ Element.width Element.fill, Element.height Element.fill, Element.Background.color <| toColour <| MazeApi.colour p ] Element.none) players
-            |> Element.row [ Element.width Element.fill, Element.height Element.fill ]
-            |> Just
+        players
+            |> List.map viewPlayerInMaze
+            |> Element.row [ width fill, height fill ]
             |> cell []
+
+
+viewPlayerInMaze : MazeApi.Playa -> Element.Element msg
+viewPlayerInMaze player =
+    Element.el
+        [ width fill
+        , height fill
+        , Background.color <| toColour <| MazeApi.colour player
+        ]
+        Element.none
 
 
 toColour : MazeApi.PlayerColour -> Element.Color
 toColour playerColour =
     case playerColour of
         MazeApi.Blue ->
-            Element.rgb255 24 24 249
+            Element.blue
 
         MazeApi.Red ->
-            Element.rgb255 249 24 24
+            Element.red
 
         MazeApi.Green ->
-            Element.rgb255 18 253 87
+            Element.green
 
         MazeApi.Purple ->
-            Element.rgb255 180 23 228
+            Element.purple
 
         MazeApi.Brown ->
-            Element.rgb255 88 69 16
+            Element.brown
 
 
-cell : List (Element.Attribute msg) -> Maybe (Element.Element msg) -> Element.Element msg
-cell attributes element =
+cell : List (Element.Attribute msg) -> Element.Element msg -> Element.Element msg
+cell attributes cellContent =
     Element.el
         ([ Element.width (Element.fill |> Element.minimum 25)
          , Element.height (Element.fill |> Element.minimum 25)
          ]
             ++ attributes
         )
-        (Maybe.withDefault Element.none element)
+        cellContent
 
 
 emptyCell : List (Element.Attribute msg) -> Element.Element msg
 emptyCell attributes =
-    cell attributes Nothing
+    cell attributes Element.none
+
+
+viewPlayers : MazeApi.GameStatus -> Element.Element msg
+viewPlayers gameStatus =
+    MazeApi.allPlayersInAGame gameStatus
+        |> List.map viewPlayer
+        |> Element.column []
+
+
+viewPlayer : MazeApi.Playa -> Element.Element msg
+viewPlayer player =
+    Element.row [ Font.color <| toColour <| MazeApi.colour player ] [ Element.text <| MazeApi.name player ]

@@ -44,7 +44,7 @@ type alias RowOfCells =
 
 type Cell
     = Wall
-    | Floor (List Player)
+    | Floor (List Playa)
 
 
 type Player
@@ -52,19 +52,52 @@ type Player
 
 
 type alias PlayerDetails =
-    { name : String }
+    { name : String
+    }
 
 
-buildPlayer : String -> Player
-buildPlayer name =
-    Player { name = name }
+type Playa
+    = Playa PlayaDetails
 
 
+type alias PlayaDetails =
+    { name : String
+    , colour : PlayerColour
+    }
 
--- Would like to make this opaque
+
+type PlayerColour
+    = Red
+    | Blue
+    | Green
+    | Purple
+    | Brown
+
+
+nColours : Int -> List PlayerColour
+nColours n =
+    List.repeat n [ Red, Blue, Green, Purple, Brown ]
+        |> List.concat
+        |> List.take n
+
+
+buildPlayas : List String -> List Playa
+buildPlayas playerNames =
+    let
+        colours =
+            nColours <| List.length playerNames
+    in
+    List.map2 Tuple.pair playerNames colours
+        |> List.map buildPlaya
+
+
+buildPlaya : ( String, PlayerColour ) -> Playa
+buildPlaya ( name, colour ) =
+    Playa { name = name, colour = colour }
 
 
 type alias GameId =
+    -- Would like to make this opaque
     String
 
 
@@ -290,17 +323,29 @@ fromApiCells runners =
 
 
 fromApiCell : List ApiRunner -> ApiCell -> Cell
-fromApiCell runners apiCell =
+fromApiCell apiPlayers apiCell =
     case apiCell of
         ApiFloor cellPosition ->
-            Floor <| addRunnersToCell runners cellPosition
+            Floor <| playersAtThisCell cellPosition <| buildPlayasAndTheirPosition apiPlayers
 
         ApiWall _ ->
             Wall
 
 
-addRunnersToCell : List ApiRunner -> ApiPosition -> List Player
-addRunnersToCell runners cellPosition =
-    runners
-        |> List.filter (\r -> r.position == cellPosition)
-        |> List.map (\r -> buildPlayer r.name)
+playersAtThisCell : ApiPosition -> List ( Playa, ApiPosition ) -> List Playa
+playersAtThisCell cellPosition allPlayers =
+    allPlayers
+        |> List.filter (\( _, position ) -> position == cellPosition)
+        |> List.map Tuple.first
+
+
+buildPlayasAndTheirPosition : List ApiRunner -> List ( Playa, ApiPosition )
+buildPlayasAndTheirPosition apiPlayers =
+    let
+        players =
+            buildPlayas <| List.map .name apiPlayers
+
+        positions =
+            List.map .position apiPlayers
+    in
+    List.map2 Tuple.pair players positions

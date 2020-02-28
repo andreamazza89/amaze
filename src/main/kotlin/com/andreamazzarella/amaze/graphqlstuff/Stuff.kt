@@ -182,12 +182,15 @@ private fun toPositionResponse(position: Position) = PositionResponse(position.x
 typealias MazeId = UUID
 
 @Component
-class TakeAStepTwo : GraphQLMutationResolver {
+class TakeAStepTwo(@Autowired val gamePublishersBuilder: GamePublishersThing) : GraphQLMutationResolver {
     fun takeAStep(gameId: GameId, playerName: String, stepDirection: StepDirectionRequest): StepResultResponse =
         TakeAStep2.doIt(gameId, playerName, fromStepDirectionRequest(stepDirection))
             .pipe { newPosition ->
                 when (newPosition) {
-                    is Ok -> StepResultResponse.NewPosition(toPositionResponse(newPosition.okValue))
+                    is Ok -> {
+                        GameRepository.find(gameId).runOnOk { gamePublishersBuilder.emitForGame(gameId, toGameStatusResponse(it)) }
+                        StepResultResponse.NewPosition(toPositionResponse(newPosition.okValue))
+                    }
                     is Err -> toStepResultErrorResponse2(newPosition.errorValue)
                 }
             }

@@ -11,7 +11,6 @@ import com.andreamazzarella.amaze.utils.pipe
 data class Game(
     val id: GameId = generateGameId(),
     val maze: Maze = aMazeFromADrawing(DEFAULT_MAZE),
-    val mazes: List<Maze> = emptyList(),
     private val players: List<Player> = emptyList()
 ) {
 
@@ -32,9 +31,6 @@ data class Game(
 
     // Update
 
-    fun withMaze(maze: Maze) =
-        this.copy(mazes = mazes + maze)
-
     fun addPlayer(playerName: String): Result<Game, PlayerAlreadyExists> =
         checkPlayerCanBeAdded(playerName)
             .map { this.copy(players = this.players + Player(playerName, maze.entrance)) }
@@ -49,7 +45,7 @@ data class Game(
         currentPosition: Position,
         direction: StepDirection
     ): Result<Position, StepError> =
-        maze.takeAStep2(currentPosition, direction)
+        maze.takeAStep(currentPosition, direction)
             .mapError { StepError.InvalidStep }
 
     // Helpers

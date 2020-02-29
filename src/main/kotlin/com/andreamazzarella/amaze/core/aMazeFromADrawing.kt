@@ -1,7 +1,7 @@
 package com.andreamazzarella.amaze.core
 
-import com.andreamazzarella.amaze.core.Position.*
-import java.lang.RuntimeException
+import com.andreamazzarella.amaze.core.Position.Column
+import com.andreamazzarella.amaze.core.Position.Row
 import java.util.UUID
 
 const val DEFAULT_MAZE = """
@@ -17,20 +17,16 @@ fun aMazeFromADrawing(
 ): Maze {
     val rows = drawing.trimIndent().split("\n").map { row -> row.toList() }
     val cells = gatherCells(rows)
-    val currentPosition = findCurrentPosition(rows)
     val exit = findExit(rows)
     return Maze(
         id = id,
         cells = cells,
-        currentPosition = currentPosition,
         entrance = entrance,
         exit = exit
     )
 }
 
 private fun findExit(rows: List<List<Char>>) = findPositionOf('⬤', rows)
-
-private fun findCurrentPosition(rows: List<List<Char>>) = findPositionOf('⚪', rows)
 
 private fun findPositionOf(character: Char, rows: List<List<Char>>): Position {
     val accumulator: Position? = null

@@ -9,18 +9,12 @@ import com.andreamazzarella.amaze.core.StepDirection
 import com.andreamazzarella.amaze.core.Wall
 import com.andreamazzarella.amaze.core.usecases.AddAPlayer
 import com.andreamazzarella.amaze.core.usecases.GetAGame
-import com.andreamazzarella.amaze.core.usecases.GetAMaze
-import com.andreamazzarella.amaze.core.usecases.HitAWall
-import com.andreamazzarella.amaze.core.usecases.MazeNotFound
 import com.andreamazzarella.amaze.core.usecases.StartAGame
 import com.andreamazzarella.amaze.core.usecases.TakeAStep2
 import com.andreamazzarella.amaze.core.usecases.TakeAStep2Error
-import com.andreamazzarella.amaze.core.usecases.TakeAStepError
 import com.andreamazzarella.amaze.persistence.GameRepository
-import com.andreamazzarella.amaze.persistence.MazeNotFoundError
 import com.andreamazzarella.amaze.utils.Err
 import com.andreamazzarella.amaze.utils.Ok
-import com.andreamazzarella.amaze.utils.Result
 import com.andreamazzarella.amaze.utils.okOrFail
 import com.andreamazzarella.amaze.utils.pipe
 import com.andreamazzarella.amaze.utils.runOnOk
@@ -59,7 +53,7 @@ class Configuration() {
 // resolvers
 
 @Component
-class GameStatus(@Autowired val getAMaze: GetAMaze) : GraphQLQueryResolver {
+class GameStatus : GraphQLQueryResolver {
     fun gameStatus(gameId: GameId): GameStatusResponse =
         GetAGame.doIt(gameId)
             .okOrFail() // Game Status Response should be the union of a successful response and a game not found
@@ -70,19 +64,6 @@ class GameStatus(@Autowired val getAMaze: GetAMaze) : GraphQLQueryResolver {
 class GamesAvailable : GraphQLQueryResolver {
     fun gamesAvailable(): List<GameId> =
         GameRepository.findAll().map(Game::id)
-}
-
-private fun toMazeInfoResponseFromResult(findMazeResult: Result<Maze, MazeNotFoundError>): GameInfoResponse =
-    when (findMazeResult) {
-        is Ok -> toMazeInfoResponse(findMazeResult.okValue)
-        is Err -> TODO()
-    }
-
-private fun toMazeInfoResponse(maze: Maze): GameInfoResponse {
-    return GameInfoResponse(
-        MazeResponse(toCellsResponse(maze)),
-        toPositionResponse(maze.currentPosition)
-    )
 }
 
 private fun toCellsResponse(maze: Maze): List<CellResponse> =
@@ -130,7 +111,7 @@ typealias GameId = String
 private fun toPositionResponse(position: Position) = PositionResponse(position.x(), position.y())
 
 @Component
-class TakeAStepTwo(@Autowired val gamePublishersBuilder: GamePublishersThing) : GraphQLMutationResolver {
+class TakeAStep(@Autowired val gamePublishersBuilder: GamePublishersThing) : GraphQLMutationResolver {
     fun takeAStepOnTheMap(gameId: GameId, playerName: String, stepDirection: StepDirectionRequest): StepResultResponse =
         TakeAStep2.doIt(gameId, playerName, fromStepDirectionRequest(stepDirection))
             .pipe { newPosition ->
@@ -139,24 +120,19 @@ class TakeAStepTwo(@Autowired val gamePublishersBuilder: GamePublishersThing) : 
                         GameRepository.find(gameId).runOnOk { gamePublishersBuilder.emitForGame(gameId, toGameStatusResponse(it)) }
                         StepResultResponse.NewPosition(toPositionResponse(newPosition.okValue))
                     }
-                    is Err -> toStepResultErrorResponse2(newPosition.errorValue)
+                    is Err -> toStepResultErrorResponse(newPosition.errorValue)
                 }
             }
 
-    private fun toStepResultErrorResponse(error: TakeAStepError): StepResultResponse =
-        when (error.error) {
-            MazeNotFound -> StepResultResponse.GameDoesNotExist("could not find your maze")
-            HitAWall -> StepResultResponse.HitAWall("you hit a wall")
-        }
-
-    private fun toStepResultErrorResponse2(error: TakeAStep2Error): StepResultResponse =
+    private fun toStepResultErrorResponse(error: TakeAStep2Error): StepResultResponse =
         when (error) {
             TakeAStep2Error.GameDoesNotExist -> StepResultResponse.GameDoesNotExist("could not find your maze")
             TakeAStep2Error.InvalidStep -> StepResultResponse.HitAWall("you hit a wall")
             TakeAStep2Error.PlayerNotInThisGame -> TODO()
         }
 
-    private fun fromStepDirectionRequest(stepDirection: StepDirectionRequest): StepDirection = when (stepDirection) {
+    private fun fromStepDirectionRequest(stepDirection: StepDirectionRequest): StepDirection =
+        when (stepDirection) {
             StepDirectionRequest.NORTH -> StepDirection.UP
             StepDirectionRequest.EAST -> StepDirection.RIGHT
             StepDirectionRequest.SOUTH -> StepDirection.DOWN
@@ -199,7 +175,8 @@ sealed class AddAPlayerResponse {
 
 @Component
 class GameSubscription(@Autowired val gamePublishersBuilder: GamePublishersThing) : GraphQLSubscriptionResolver {
-    fun gameStatus(gameId: GameId): Publisher<GameStatusResponse> = gamePublishersBuilder.publisherForGameId(gameId)
+    fun gameStatus(gameId: GameId): Publisher<GameStatusResponse> =
+        gamePublishersBuilder.publisherForGameId(gameId)
 }
 
 @Component

@@ -32,7 +32,6 @@ class MazeTest {
 
         val expectedMaze = Maze(
             id = mazeId,
-            currentPosition = pos(0, 1),
             entrance = pos(0, 1),
             exit = pos(1, 4),
             cells = listOf(
@@ -55,10 +54,10 @@ class MazeTest {
             """.trimIndent()
         )
 
-        val stepResult = maze.takeAStep(UP)
+        val stepResult = maze.takeAStep(pos(1, 1), UP)
 
 
-        assertOkEquals(pos(0,1), stepResult)
+        assertOkEquals(pos(0, 1), stepResult)
     }
 
     @Test
@@ -71,10 +70,10 @@ class MazeTest {
             """.trimIndent()
         )
 
-        val stepResult = maze.takeAStep(DOWN)
+        val stepResult = maze.takeAStep(pos(0, 1), DOWN)
 
 
-        assertOkEquals(pos(1,1), stepResult)
+        assertOkEquals(pos(1, 1), stepResult)
     }
 
     @Test
@@ -87,10 +86,10 @@ class MazeTest {
             """.trimIndent()
         )
 
-        val stepResult = maze.takeAStep(RIGHT)
+        val stepResult = maze.takeAStep(pos(1, 1), RIGHT)
 
 
-        assertOkEquals(pos(1,2), stepResult)
+        assertOkEquals(pos(1, 2), stepResult)
     }
 
     @Test
@@ -103,10 +102,10 @@ class MazeTest {
             """.trimIndent()
         )
 
-        val stepResult = maze.takeAStep(LEFT)
+        val stepResult = maze.takeAStep(pos(1, 2), LEFT)
 
 
-        assertOkEquals(pos(1,1), stepResult)
+        assertOkEquals(pos(1, 1), stepResult)
     }
 
     @Test
@@ -119,7 +118,7 @@ class MazeTest {
             """.trimIndent()
         )
 
-        val stepResult = maze.takeAStep(DOWN)
+        val stepResult = maze.takeAStep(pos(1, 2), DOWN)
 
         assertIsError(StepError(), stepResult)
     }
@@ -134,12 +133,10 @@ class MazeTest {
             """.trimIndent()
         )
 
-        val stepResult = maze.takeAStep(UP)
+        val stepResult = maze.takeAStep(pos(0, 1), UP)
 
         assertIsError(StepError("you walked out of the maze"), stepResult)
     }
-
-
 
     private fun pos(row: Int, column: Int) = Position(Position.Row(row), Position.Column(column))
 }

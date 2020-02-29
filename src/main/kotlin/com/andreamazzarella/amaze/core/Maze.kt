@@ -10,21 +10,10 @@ typealias MazeId = UUID
 data class Maze(
     val id: MazeId,
     val cells: List<Cell>,
-    val currentPosition: Position,
     val entrance: Position,
     private val exit: Position
 ) {
-
-    fun takeAStep(direction: StepDirection): Result<Position, StepError> {
-        val newPosition = this.currentPosition.nearby(direction)
-        return when (cellAt(newPosition)) {
-            is Wall -> Err(StepError())
-            is Floor -> Ok(newPosition)
-            is OutsideMaze -> Err(StepError("you walked out of the maze"))
-        }
-    }
-
-    fun takeAStep2(currentPosition: Position, direction: StepDirection): Result<Position, StepError> {
+    fun takeAStep(currentPosition: Position, direction: StepDirection): Result<Position, StepError> {
         val newPosition = currentPosition.nearby(direction)
         return when (cellAt(newPosition)) {
             is Wall -> Err(StepError())
@@ -34,8 +23,6 @@ data class Maze(
     }
 
     private fun cellAt(position: Position): Cell = this.cells.find { it.position == position } ?: OutsideMaze(position)
-
-    fun withPosition(newPosition: Position): Maze = this.copy(currentPosition = newPosition)
 }
 
 sealed class Cell {

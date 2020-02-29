@@ -1,0 +1,13 @@
+{
+  "name": "elm-starter-kit",
+  "version": "1.0.0",
+  "description": "Great choice!",
+  "scripts": {
+    "setup": "elm make src/Main.elm",
+    "dev": "elm reactor",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "elm": "^0.19.1-3"
+  }
+}

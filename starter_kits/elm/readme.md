@@ -2,6 +2,8 @@
 
 Great choice!
 
+I recommend using IntelliJ with the [elm plugin](https://plugins.jetbrains.com/plugin/10268-elm)
+
 ## Prerequisites
 - npm (or whatever lets you install node dependencies from `package.json`)
 

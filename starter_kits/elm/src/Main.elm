@@ -1,25 +1,43 @@
 module Main exposing (main)
 
 import Browser
-import Html exposing (Html, button, div, text)
-import Html.Events exposing (onClick)
+import Html exposing (Html, div, input, text)
+import Html.Attributes exposing (placeholder, value)
+import Html.Events exposing (onInput)
 
+
+main : Program () { serverUrl : String } Msg
 main =
-  Browser.sandbox { init = 0, update = update, view = view }
+    Browser.element { init = init, update = update, view = view, subscriptions = always Sub.none }
 
-type Msg = Increment | Decrement
 
+type alias Model =
+    { serverUrl : String }
+
+
+type Msg
+    = ServerUrlTyped String
+
+
+init _ =
+    ( { serverUrl = "" }, Cmd.none )
+
+
+update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
-  case msg of
-    Increment ->
-      model + 1
+    case msg of
+        ServerUrlTyped url ->
+            ( { model | serverUrl = url }, Cmd.none )
 
-    Decrement ->
-      model - 1
 
+view : Model -> Html Msg
 view model =
-  div []
-    [ button [ onClick Decrement ] [ text "-" ]
-    , div [] [ text (String.fromInt model) ]
-    , button [ onClick Increment ] [ text "+" ]
-    ]
+    div []
+        [ text "hi"
+        , input
+            [ onInput ServerUrlTyped
+            , placeholder "type the server url here"
+            , value model.serverUrl
+            ]
+            []
+        ]

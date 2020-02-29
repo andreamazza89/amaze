@@ -1,6 +1,7 @@
 # Jetbrains
 .idea/*
 .idea/**/*
+.idea
 
 # Gradle
 .gradle

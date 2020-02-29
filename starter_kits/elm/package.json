@@ -4,7 +4,7 @@
   "description": "Great choice!",
   "scripts": {
     "setup": "elm make src/Main.elm",
-    "dev": "elm reactor",
+    "dev": "elm reactor --port=8989",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {

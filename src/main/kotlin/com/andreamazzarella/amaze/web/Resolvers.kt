@@ -32,6 +32,7 @@ class Queries : GraphQLQueryResolver {
     fun sampleQuery(): SampleType =
         SampleType(
             aString = "hello",
+            anotherString = "ciao",
             aNestedThing = AThing(42),
             aListOfThings = listOf(AThing(42), AThing(43))
         )

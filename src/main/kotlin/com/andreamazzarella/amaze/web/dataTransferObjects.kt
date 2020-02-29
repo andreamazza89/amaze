@@ -44,6 +44,7 @@ typealias GameId = String
 
 data class SampleType(
     val aString: String,
+    val anotherString: String,
     val aNestedThing: AThing,
     val aListOfThings: List<AThing>
 )

@@ -6,6 +6,7 @@ type Query {
 
 type SampleType {
     aString: String!
+    anotherString: String!
     aNestedThing: AThing!
     aListOfThings: [AThing!]!
 }

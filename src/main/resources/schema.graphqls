@@ -1,6 +1,17 @@
 type Query {
     gameStatus(gameId: ID!): GameStatus!
     gamesAvailable: [ID!]!
+    sampleQuery: SampleType!
+}
+
+type SampleType {
+    aString: String!
+    aNestedThing: AThing!
+    aListOfThings: [AThing!]!
+}
+
+type AThing {
+    theAnswer: Int
 }
 
 type Mutation {

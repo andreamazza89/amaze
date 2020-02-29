@@ -39,3 +39,13 @@ sealed class AddAPlayerResponse {
 }
 
 typealias GameId = String
+
+// Sample query objects
+
+data class SampleType(
+    val aString: String,
+    val aNestedThing: AThing,
+    val aListOfThings: List<AThing>
+)
+
+data class AThing(val theAnswer: Int)

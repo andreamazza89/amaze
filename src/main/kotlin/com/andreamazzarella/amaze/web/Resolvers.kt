@@ -28,6 +28,13 @@ class Queries : GraphQLQueryResolver {
 
     fun gamesAvailable(): List<GameId> =
         GameRepository.findAll().map(Game::id)
+
+    fun sampleQuery(): SampleType =
+        SampleType(
+            aString = "hello",
+            aNestedThing = AThing(42),
+            aListOfThings = listOf(AThing(42), AThing(43))
+        )
 }
 
 // Mutations

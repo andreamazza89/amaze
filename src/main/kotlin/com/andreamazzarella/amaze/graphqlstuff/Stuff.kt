@@ -112,7 +112,7 @@ private fun toPositionResponse(position: Position) = PositionResponse(position.x
 
 @Component
 class TakeAStep(@Autowired val gamePublishersBuilder: GamePublishersThing) : GraphQLMutationResolver {
-    fun takeAStepOnTheMap(gameId: GameId, playerName: String, stepDirection: StepDirectionRequest): StepResultResponse =
+    fun takeAStep(gameId: GameId, playerName: String, stepDirection: StepDirectionRequest): StepResultResponse =
         TakeAStep2.doIt(gameId, playerName, fromStepDirectionRequest(stepDirection))
             .pipe { newPosition ->
                 when (newPosition) {

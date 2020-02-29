@@ -9,8 +9,8 @@ import com.andreamazzarella.amaze.core.StepDirection.DOWN
 import com.andreamazzarella.amaze.core.usecases.AddAPlayer
 import com.andreamazzarella.amaze.core.usecases.GetAGame
 import com.andreamazzarella.amaze.core.usecases.StartAGame
-import com.andreamazzarella.amaze.core.usecases.TakeAStep2
-import com.andreamazzarella.amaze.core.usecases.TakeAStep2Error
+import com.andreamazzarella.amaze.core.usecases.TakeAStep
+import com.andreamazzarella.amaze.core.usecases.TakeAStepError
 import org.junit.jupiter.api.Test
 
 class TakeAStepTest {
@@ -21,7 +21,7 @@ class TakeAStepTest {
 
         AddAPlayer.doIt(gameId, "runner 1")
 
-        TakeAStep2.doIt(gameId, "runner 1", DOWN)
+        TakeAStep.doIt(gameId, "runner 1", DOWN)
         val gameUpdated = GetAGame.doIt(gameId)
 
         assertOk(gameUpdated) { it.playersPositions() == listOf(Pair("runner 1", Position(Row(1), Column(1)))) }
@@ -31,8 +31,8 @@ class TakeAStepTest {
     fun `a player cannot take a step when they are not in a game`() {
         val gameId = StartAGame.doIt()
 
-        val takeAStepResult = TakeAStep2.doIt(gameId, "runner 1", DOWN)
+        val takeAStepResult = TakeAStep.doIt(gameId, "runner 1", DOWN)
 
-        assertIsError(TakeAStep2Error.PlayerNotInThisGame, takeAStepResult)
+        assertIsError(TakeAStepError.PlayerNotInThisGame, takeAStepResult)
     }
 }

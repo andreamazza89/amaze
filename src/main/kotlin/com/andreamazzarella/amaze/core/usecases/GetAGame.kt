@@ -7,5 +7,6 @@ import com.andreamazzarella.amaze.persistence.GameRepository
 import com.andreamazzarella.amaze.utils.Result
 
 object GetAGame {
-    fun doIt(gameId: GameId): Result<Game, GameNotFoundError> = GameRepository.find(gameId)
+    fun doIt(gameId: GameId): Result<Game, GameNotFoundError> =
+        GameRepository.find(gameId)
 }

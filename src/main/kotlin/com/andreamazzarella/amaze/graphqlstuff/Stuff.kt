@@ -63,13 +63,6 @@ class Configuration() {
 // resolvers
 
 @Component
-class GameInfo(@Autowired val getAMaze: GetAMaze) : GraphQLQueryResolver {
-    fun gameInfo(gameId: GameId, playerName: String): GameInfoResponse {
-        TODO()
-    }
-}
-
-@Component
 class GameStatus(@Autowired val getAMaze: GetAMaze) : GraphQLQueryResolver {
     fun gameStatus(gameId: GameId): GameStatusResponse =
         GetAGame.doIt(gameId)

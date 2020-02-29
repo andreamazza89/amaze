@@ -6,7 +6,7 @@ type Query {
 type Mutation {
     startAGame: ID!
     addAPlayerToAGame(gameId: ID!, playerName: String!): AddAPlayerResponse!
-    takeAStep(gameId: ID!, playerName: String!, stepDirection: Direction!): StepResult!
+    takeAStepOnTheMap(gameId: ID!, playerName: String!, stepDirection: AbsoluteDirection!): StepResult!
 }
 
 type Subscription {
@@ -62,11 +62,11 @@ type Position {
     y: Int!
 }
 
-enum Direction {
-    UP
-    RIGHT
-    DOWN
-    LEFT
+enum AbsoluteDirection {
+    NORTH
+    EAST
+    SOUTH
+    WEST
 }
 
 union StepResult = GameDoesNotExist | HitAWall | PlayerNotInThisGame | NewPosition

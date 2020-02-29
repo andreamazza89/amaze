@@ -2,25 +2,22 @@ package com.andreamazzarella.amaze.graphqlstuff
 
 import com.andreamazzarella.amaze.core.Floor
 import com.andreamazzarella.amaze.core.Game
-import com.andreamazzarella.amaze.core.usecases.GetAMaze
-import com.andreamazzarella.amaze.core.usecases.HitAWall
-import com.andreamazzarella.amaze.core.usecases.MakeAMaze
 import com.andreamazzarella.amaze.core.Maze
-import com.andreamazzarella.amaze.core.usecases.MazeNotFound
 import com.andreamazzarella.amaze.core.OutsideMaze
 import com.andreamazzarella.amaze.core.Position
 import com.andreamazzarella.amaze.core.StepDirection
-import com.andreamazzarella.amaze.core.usecases.TakeAStep
-import com.andreamazzarella.amaze.core.usecases.TakeAStepError
 import com.andreamazzarella.amaze.core.Wall
 import com.andreamazzarella.amaze.core.usecases.AddAPlayer
 import com.andreamazzarella.amaze.core.usecases.GetAGame
+import com.andreamazzarella.amaze.core.usecases.GetAMaze
+import com.andreamazzarella.amaze.core.usecases.HitAWall
+import com.andreamazzarella.amaze.core.usecases.MazeNotFound
 import com.andreamazzarella.amaze.core.usecases.StartAGame
 import com.andreamazzarella.amaze.core.usecases.TakeAStep2
 import com.andreamazzarella.amaze.core.usecases.TakeAStep2Error
+import com.andreamazzarella.amaze.core.usecases.TakeAStepError
 import com.andreamazzarella.amaze.persistence.GameRepository
 import com.andreamazzarella.amaze.persistence.MazeNotFoundError
-import com.andreamazzarella.amaze.persistence.MazeRepository
 import com.andreamazzarella.amaze.utils.Err
 import com.andreamazzarella.amaze.utils.Ok
 import com.andreamazzarella.amaze.utils.Result
@@ -40,7 +37,6 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.stereotype.Component
-import java.util.UUID
 
 @Configuration
 class Configuration() {
@@ -131,52 +127,11 @@ fun toPlayerPositionResponse(player: Pair<String, Position>) =
 
 typealias GameId = String
 
-@Component
-class CreateAMaze(@Autowired val makeAMaze: MakeAMaze) : GraphQLMutationResolver {
-    fun createAMaze(mazeRunner: String): MazeId = makeAMaze.doIt()
-}
-
-@Component
-class TakeAStepInTheMaze(
-    @Autowired val takeAStep: TakeAStep,
-    @Autowired val mazeRepository: MazeRepository
-) : GraphQLMutationResolver {
-    fun takeAStep(mazeId: MazeId, stepDirection: StepDirectionRequest): StepResultResponse {
-        val stepResult = takeAStep.doIt(mazeId, fromStepDirectionRequest(stepDirection))
-        return toStepResultResponse(stepResult)
-    }
-
-    private fun toStepResultResponse(stepResult: Result<Position, TakeAStepError>): StepResultResponse =
-        when (stepResult) {
-            is Ok -> {
-                // gamePublisher.emitter!!.onNext(mazeRepository.allMazes().map(::toMazeInfoResponse))
-                StepResultResponse.NewPosition(toPositionResponse(stepResult.okValue))
-            }
-            is Err -> toStepResultErrorResponse(stepResult.errorValue)
-        }
-
-    private fun toStepResultErrorResponse(error: TakeAStepError): StepResultResponse =
-        when (error.error) {
-            MazeNotFound -> StepResultResponse.GameDoesNotExist("could not find your maze")
-            HitAWall -> StepResultResponse.HitAWall("you hit a wall")
-        }
-
-    private fun fromStepDirectionRequest(stepDirection: StepDirectionRequest): StepDirection =
-        when (stepDirection) {
-            StepDirectionRequest.UP -> StepDirection.UP
-            StepDirectionRequest.RIGHT -> StepDirection.RIGHT
-            StepDirectionRequest.DOWN -> StepDirection.DOWN
-            StepDirectionRequest.LEFT -> StepDirection.LEFT
-        }
-}
-
 private fun toPositionResponse(position: Position) = PositionResponse(position.x(), position.y())
-
-typealias MazeId = UUID
 
 @Component
 class TakeAStepTwo(@Autowired val gamePublishersBuilder: GamePublishersThing) : GraphQLMutationResolver {
-    fun takeAStep(gameId: GameId, playerName: String, stepDirection: StepDirectionRequest): StepResultResponse =
+    fun takeAStepOnTheMap(gameId: GameId, playerName: String, stepDirection: StepDirectionRequest): StepResultResponse =
         TakeAStep2.doIt(gameId, playerName, fromStepDirectionRequest(stepDirection))
             .pipe { newPosition ->
                 when (newPosition) {
@@ -201,19 +156,18 @@ class TakeAStepTwo(@Autowired val gamePublishersBuilder: GamePublishersThing) : 
             TakeAStep2Error.PlayerNotInThisGame -> TODO()
         }
 
-    private fun fromStepDirectionRequest(stepDirection: StepDirectionRequest): StepDirection =
-        when (stepDirection) {
-            StepDirectionRequest.UP -> StepDirection.UP
-            StepDirectionRequest.RIGHT -> StepDirection.RIGHT
-            StepDirectionRequest.DOWN -> StepDirection.DOWN
-            StepDirectionRequest.LEFT -> StepDirection.LEFT
+    private fun fromStepDirectionRequest(stepDirection: StepDirectionRequest): StepDirection = when (stepDirection) {
+            StepDirectionRequest.NORTH -> StepDirection.UP
+            StepDirectionRequest.EAST -> StepDirection.RIGHT
+            StepDirectionRequest.SOUTH -> StepDirection.DOWN
+            StepDirectionRequest.WEST -> StepDirection.LEFT
         }
 }
 
 ////////////////////////
 // data transfer objects
 
-enum class StepDirectionRequest { UP, RIGHT, DOWN, LEFT }
+enum class StepDirectionRequest { NORTH, EAST, SOUTH, WEST }
 
 data class GameInfoResponse(private val maze: MazeResponse, private val yourPosition: PositionResponse)
 data class GameStatusResponse(private val maze: MazeResponse, private val playersPositions: List<PlayerPositionResponse>)

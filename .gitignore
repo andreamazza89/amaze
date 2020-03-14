@@ -14,5 +14,6 @@ elm-stuff
 dist
 .cache
 index.html
+vendor
 
 frontend/src/elm/Api/*

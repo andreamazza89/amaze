@@ -6,6 +6,7 @@
 - `bundle install`
 
 ## Run the app
+- update the server address in lib/app.rb
 - ruby lib/app.rb
 
 ## Run tests

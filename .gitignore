@@ -6,7 +6,6 @@
 # Gradle
 .gradle
 /build/
-lib/
 out/
 
 node_modules

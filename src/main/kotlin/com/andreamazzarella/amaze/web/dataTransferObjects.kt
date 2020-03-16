@@ -38,6 +38,11 @@ sealed class AddAPlayerResponse {
     data class Failure(val message: String?) : AddAPlayerResponse()
 }
 
+sealed class DirectionsAvailableResponse {
+    data class Success(val directions: List<PositionResponse>) : DirectionsAvailableResponse()
+    data class Failure(val message: String?) : DirectionsAvailableResponse()
+}
+
 typealias GameId = String
 
 // Sample query objects

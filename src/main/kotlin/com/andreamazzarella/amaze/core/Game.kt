@@ -20,12 +20,20 @@ data class Game(
         this.players.map { it.name to it.currentPosition }
 
     fun playerPosition(playerName: String): Result<Position, StepError> =
-        players.find { it.name == playerName }
+        findPlayer(playerName)
             .pipe { player ->
-                if (player == null) {
-                    Err(StepError.PlayerNotFound)
-                } else {
-                    Ok(player.currentPosition)
+                when (player) {
+                    null -> Err(StepError.PlayerNotFound)
+                    else -> Ok(player.currentPosition)
+                }
+            }
+
+    fun directionsAvailableFor(playerName: String): Result<List<StepDirection>, PlayerNotFound> =
+        findPlayer(playerName)
+            .pipe { player ->
+                when (player) {
+                    null -> Err(PlayerNotFound)
+                    else -> Ok(maze.directionsAvailableFor(player.currentPosition))
                 }
             }
 
@@ -50,6 +58,9 @@ data class Game(
 
     // Helpers
 
+    private fun findPlayer(playerName: String): Player? =
+        players.find { it.name == playerName }
+
     private fun checkPlayerCanBeAdded(playerName: String): Result<Unit, PlayerAlreadyExists> =
         when {
             this.players.any { it.name == playerName } -> Err(PlayerAlreadyExists)
@@ -68,6 +79,7 @@ data class Game(
     // Errors
 
     object PlayerAlreadyExists
+    object PlayerNotFound
 
     sealed class StepError {
         object PlayerNotFound : StepError()

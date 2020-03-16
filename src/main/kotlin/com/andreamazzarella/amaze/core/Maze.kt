@@ -1,8 +1,13 @@
 package com.andreamazzarella.amaze.core
 
+import com.andreamazzarella.amaze.core.StepDirection.DOWN
+import com.andreamazzarella.amaze.core.StepDirection.LEFT
+import com.andreamazzarella.amaze.core.StepDirection.RIGHT
+import com.andreamazzarella.amaze.core.StepDirection.UP
 import com.andreamazzarella.amaze.utils.Err
 import com.andreamazzarella.amaze.utils.Ok
 import com.andreamazzarella.amaze.utils.Result
+import com.andreamazzarella.amaze.utils.pipe
 import java.util.UUID
 
 typealias MazeId = UUID
@@ -13,6 +18,10 @@ data class Maze(
     val entrance: Position,
     private val exit: Position
 ) {
+    fun directionsAvailableFor(currentPosition: Position): List<StepDirection> =
+        StepDirection.values()
+            .filter { direction -> cellNearby(currentPosition, direction) is Floor }
+
     fun takeAStep(currentPosition: Position, direction: StepDirection): Result<Position, StepError> {
         val newPosition = currentPosition.nearby(direction)
         return when (cellAt(newPosition)) {
@@ -22,7 +31,13 @@ data class Maze(
         }
     }
 
-    private fun cellAt(position: Position): Cell = this.cells.find { it.position == position } ?: OutsideMaze(position)
+    private fun cellNearby(currentPosition: Position, direction: StepDirection): Cell =
+        currentPosition
+            .nearby(direction)
+            .pipe(::cellAt)
+
+    private fun cellAt(position: Position): Cell =
+        this.cells.find { it.position == position } ?: OutsideMaze(position)
 }
 
 sealed class Cell {
@@ -43,10 +58,10 @@ data class Position(val row: Row, val column: Column) {
 
     fun nearby(direction: StepDirection): Position =
         when (direction) {
-            StepDirection.UP -> this.copy(row = this.row.aboveIt())
-            StepDirection.RIGHT -> this.copy(column = this.column.toItsRight())
-            StepDirection.DOWN -> this.copy(row = this.row.belowIt())
-            StepDirection.LEFT -> this.copy(column = this.column.toItsLeft())
+            UP -> this.copy(row = this.row.aboveIt())
+            RIGHT -> this.copy(column = this.column.toItsRight())
+            DOWN -> this.copy(row = this.row.belowIt())
+            LEFT -> this.copy(column = this.column.toItsLeft())
         }
 
     data class Row(val rowNumber: Int) {

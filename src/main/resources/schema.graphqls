@@ -1,6 +1,7 @@
 type Query {
     gameStatus(gameId: ID!): GameStatus!
     gamesAvailable: [ID!]!
+    directionsAvailable(gameId: ID!, playerName: String!): DirectionsAvailableResponse
     sampleQuery: SampleType!
 }
 
@@ -33,6 +34,12 @@ type Success {
 
 type Failure {
     message: String
+}
+
+union DirectionsAvailableResponse = DirectionsAvailable | Failure
+
+type DirectionsAvailable {
+    directions: [Direction!]!
 }
 
 type GameInfo {

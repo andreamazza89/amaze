@@ -45,6 +45,38 @@ class MazeTest {
     }
 
     @Test
+    fun `knows what directions are available (example one - DOWN)`() {
+        val maze = aMazeFromADrawing(
+            """
+                ⬛⚪⬛⬛⬛
+                ⬛⬜⬜⬜⬤
+                ⬛⬛⬛⬛⬛
+            """.trimIndent()
+        )
+
+        val directions = maze.directionsAvailableFor(pos(0, 1))
+
+        assertEquals(listOf(DOWN), directions)
+    }
+
+    @Test
+    fun `knows what directions are available (example two - DOWN RIGHT LEFT)`() {
+        val maze = aMazeFromADrawing(
+            """
+                ⬛⬜⬛⬛⬛
+                ⬛⬜⚪⬜⬤
+                ⬛⬛⬜⬛⬛
+                ⬛⬛⬛⬛⬛
+            """.trimIndent()
+        )
+
+        val directions = maze.directionsAvailableFor(pos(1, 2))
+
+        assertEquals(listOf(RIGHT, DOWN, LEFT), directions)
+    }
+
+
+    @Test
     fun `takes a step up in the maze`() {
         val maze = aMazeFromADrawing(
             """

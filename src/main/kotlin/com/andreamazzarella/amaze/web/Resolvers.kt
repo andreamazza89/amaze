@@ -2,6 +2,7 @@ package com.andreamazzarella.amaze.web
 
 import com.andreamazzarella.amaze.core.Game
 import com.andreamazzarella.amaze.core.usecases.AddAPlayer
+import com.andreamazzarella.amaze.core.usecases.DirectionsAvailable
 import com.andreamazzarella.amaze.core.usecases.GetAGame
 import com.andreamazzarella.amaze.core.usecases.StartAGame
 import com.andreamazzarella.amaze.core.usecases.TakeAStep
@@ -28,6 +29,10 @@ class Queries : GraphQLQueryResolver {
 
     fun gamesAvailable(): List<GameId> =
         GameRepository.findAll().map(Game::id)
+
+    fun directionsAvailable(gameId: GameId, playerName: String): DirectionsAvailableResponse =
+        DirectionsAvailable.doIt(gameId, playerName)
+            .pipe(Mappers::toDirectionsAvailableResponse)
 
     fun sampleQuery(): SampleType =
         SampleType(

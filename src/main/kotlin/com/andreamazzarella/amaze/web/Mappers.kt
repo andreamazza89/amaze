@@ -9,6 +9,7 @@ import com.andreamazzarella.amaze.core.Position
 import com.andreamazzarella.amaze.core.StepDirection
 import com.andreamazzarella.amaze.core.Wall
 import com.andreamazzarella.amaze.core.usecases.AddAPlayerError
+import com.andreamazzarella.amaze.core.usecases.DirectionsAvailableError
 import com.andreamazzarella.amaze.core.usecases.TakeAStepError
 import com.andreamazzarella.amaze.utils.Err
 import com.andreamazzarella.amaze.utils.Ok
@@ -21,6 +22,9 @@ object Mappers {
             MazeResponse(toCellsResponse(game.maze)),
             game.playersPositions().map(::toPlayerPositionResponse)
         )
+
+    fun toDirectionsAvailableResponse(result: Result<List<StepDirection>, DirectionsAvailableError>): DirectionsAvailableResponse =
+        TODO()
 
     fun toAddAPlayerResponse(result: Result<String, AddAPlayerError>): AddAPlayerResponse =
         when (result) {

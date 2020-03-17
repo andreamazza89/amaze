@@ -24,7 +24,12 @@ object Mappers {
         )
 
     fun toDirectionsAvailableResponse(result: Result<List<StepDirection>, DirectionsAvailableError>): DirectionsAvailableResponse =
-        TODO()
+        when (result) {
+            is Ok ->
+                DirectionsAvailableResponse.DirectionsAvailable(result.okValue.map(::toStepDirectionResponse))
+            is Err ->
+                DirectionsAvailableResponse.Failure("Something went wrong with your request: maybe the gameID or playerName is invalid?")
+        }
 
     fun toAddAPlayerResponse(result: Result<String, AddAPlayerError>): AddAPlayerResponse =
         when (result) {
@@ -57,7 +62,15 @@ object Mappers {
         when (error) {
             TakeAStepError.GameDoesNotExist -> StepResultResponse.GameDoesNotExist("could not find your maze")
             TakeAStepError.InvalidStep -> StepResultResponse.HitAWall("you hit a wall")
-            TakeAStepError.PlayerNotInThisGame -> TODO()
+            TakeAStepError.PlayerNotInThisGame -> StepResultResponse.PlayerNotInThisGame("this player does not exist in this game")
+        }
+
+    private fun toStepDirectionResponse(stepDirection: StepDirection): StepDirectionResponse =
+        when (stepDirection) {
+            StepDirection.UP -> StepDirectionResponse.NORTH
+            StepDirection.RIGHT -> StepDirectionResponse.EAST
+            StepDirection.DOWN -> StepDirectionResponse.SOUTH
+            StepDirection.LEFT -> StepDirectionResponse.WEST
         }
 
     // Request --> Domain

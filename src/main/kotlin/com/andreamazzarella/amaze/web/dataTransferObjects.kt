@@ -1,6 +1,7 @@
 package com.andreamazzarella.amaze.web
 
 enum class StepDirectionRequest { NORTH, EAST, SOUTH, WEST }
+typealias StepDirectionResponse = StepDirectionRequest
 
 data class GameStatusResponse(
     val maze: MazeResponse,
@@ -39,7 +40,7 @@ sealed class AddAPlayerResponse {
 }
 
 sealed class DirectionsAvailableResponse {
-    data class Success(val directions: List<PositionResponse>) : DirectionsAvailableResponse()
+    data class DirectionsAvailable(val directions: List<StepDirectionResponse>) : DirectionsAvailableResponse()
     data class Failure(val message: String?) : DirectionsAvailableResponse()
 }
 

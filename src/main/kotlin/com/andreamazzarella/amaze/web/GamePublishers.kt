@@ -20,10 +20,12 @@ class GamePublishers {
         GameRepository
             .find(gameId)
             .runOnOk {
-                publishers[gameId]!!.emitter!!
-                    .onNext(Mappers.toGameStatusResponse(it))
+                emitterForGame(gameId).onNext(Mappers.toGameStatusResponse(it))
             }
     }
+
+    private fun emitterForGame(gameId: GameId): ObservableEmitter<GameStatusResponse> =
+        publishers[gameId]?.emitter ?: initialisePublisher(gameId).emitter!!
 
     private fun initialisePublisher(gameId: GameId): GamePublisher {
         val publisher = GamePublisher()

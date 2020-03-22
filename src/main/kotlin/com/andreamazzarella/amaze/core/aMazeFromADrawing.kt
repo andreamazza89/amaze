@@ -1,5 +1,7 @@
 package com.andreamazzarella.amaze.core
 
+import com.andreamazzarella.amaze.core.Cell.Floor
+import com.andreamazzarella.amaze.core.Cell.Wall
 import com.andreamazzarella.amaze.core.Position.Column
 import com.andreamazzarella.amaze.core.Position.Row
 import java.util.UUID

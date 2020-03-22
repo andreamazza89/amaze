@@ -1,19 +1,20 @@
 package com.andreamazzarella.amaze.web
 
 
-import com.andreamazzarella.amaze.core.Floor
+import com.andreamazzarella.amaze.core.Cell.Floor
+import com.andreamazzarella.amaze.core.Cell.OutsideMaze
+import com.andreamazzarella.amaze.core.Cell.Wall
 import com.andreamazzarella.amaze.core.Game
 import com.andreamazzarella.amaze.core.Maze
-import com.andreamazzarella.amaze.core.OutsideMaze
 import com.andreamazzarella.amaze.core.Position
 import com.andreamazzarella.amaze.core.StepDirection
-import com.andreamazzarella.amaze.core.Wall
 import com.andreamazzarella.amaze.core.usecases.AddAPlayerError
 import com.andreamazzarella.amaze.core.usecases.DirectionsAvailableError
 import com.andreamazzarella.amaze.core.usecases.TakeAStepError
 import com.andreamazzarella.amaze.utils.Err
 import com.andreamazzarella.amaze.utils.Ok
 import com.andreamazzarella.amaze.utils.Result
+
 object Mappers {
     // Domain --> Response
 

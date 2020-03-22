@@ -2,7 +2,8 @@ package com.andreamazzarella.amaze
 
 import assertIsError
 import assertOkEquals
-import com.andreamazzarella.amaze.core.Floor
+import com.andreamazzarella.amaze.core.Cell.Floor
+import com.andreamazzarella.amaze.core.Cell.Wall
 import com.andreamazzarella.amaze.core.Maze
 import com.andreamazzarella.amaze.core.Position
 import com.andreamazzarella.amaze.core.StepDirection.DOWN
@@ -10,7 +11,6 @@ import com.andreamazzarella.amaze.core.StepDirection.LEFT
 import com.andreamazzarella.amaze.core.StepDirection.RIGHT
 import com.andreamazzarella.amaze.core.StepDirection.UP
 import com.andreamazzarella.amaze.core.StepError
-import com.andreamazzarella.amaze.core.Wall
 import com.andreamazzarella.amaze.core.aMazeFromADrawing
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test

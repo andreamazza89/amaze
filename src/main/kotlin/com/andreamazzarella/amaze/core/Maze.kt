@@ -1,5 +1,8 @@
 package com.andreamazzarella.amaze.core
 
+import com.andreamazzarella.amaze.core.Cell.Floor
+import com.andreamazzarella.amaze.core.Cell.OutsideMaze
+import com.andreamazzarella.amaze.core.Cell.Wall
 import com.andreamazzarella.amaze.core.StepDirection.DOWN
 import com.andreamazzarella.amaze.core.StepDirection.LEFT
 import com.andreamazzarella.amaze.core.StepDirection.RIGHT
@@ -48,11 +51,12 @@ data class Maze(
 
 sealed class Cell {
     abstract val position: Position
+
+    data class Floor(override val position: Position) : Cell()
+    data class Wall(override val position: Position) : Cell()
+    data class OutsideMaze(override val position: Position) : Cell()
 }
 
-data class Floor(override val position: Position) : Cell()
-data class Wall(override val position: Position) : Cell()
-data class OutsideMaze(override val position: Position) : Cell()
 data class StepError(val message: String = "you hit a wall")
 
 enum class StepDirection { UP, RIGHT, DOWN, LEFT }

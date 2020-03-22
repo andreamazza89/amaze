@@ -6,13 +6,14 @@ import com.github.kittinunf.fuel.gson.responseObject
 import com.github.kittinunf.fuel.httpPost
 import com.github.kittinunf.result.Result
 
-val SERVER_URL: String = TODO("replace this placeholder with the server url (e.g. https://myserver.com)")
+val SERVER_URL: String = "http://localhost:8080" // TODO("replace this placeholder with the server url (e.g. https://myserver.com)")
 
 fun main() {
-    when (val result = postQuery()) {
-        is Result.Success -> println("Success!! - ${result.value.data.sampleQuery.aString}")
-        is Result.Failure -> println("Your request failed")
-    }
+    WallFollower.solve(AbsoluteDirection.SOUTH)
+    // when (val result = postQuery()) {
+    //     is Result.Success -> println("Success!! - ${result.value.data.sampleQuery.aString}")
+    //     is Result.Failure -> println("Your request failed")
+    // }
 }
 
 data class GraphQLQuery(val query: String)

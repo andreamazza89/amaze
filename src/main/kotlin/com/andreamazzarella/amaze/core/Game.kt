@@ -28,12 +28,12 @@ data class Game(
                 }
             }
 
-    fun directionsAvailableFor(playerName: String): Result<List<StepDirection>, PlayerNotFound> =
+    fun positionStatusFor(playerName: String): Result<Position.Status, PlayerNotFound> =
         findPlayer(playerName)
             .pipe { player ->
                 when (player) {
                     null -> Err(PlayerNotFound)
-                    else -> Ok(maze.directionsAvailableFor(player.currentPosition))
+                    else -> Ok(maze.positionStatus(player.currentPosition))
                 }
             }
 

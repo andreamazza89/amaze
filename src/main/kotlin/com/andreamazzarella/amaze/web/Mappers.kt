@@ -23,12 +23,17 @@ object Mappers {
             game.playersPositions().map(::toPlayerPositionResponse)
         )
 
-    fun toDirectionsAvailableResponse(result: Result<List<StepDirection>, DirectionsAvailableError>): DirectionsAvailableResponse =
+    fun toStatusResponse(result: Result<Position.Status, DirectionsAvailableError>): PlayerStatusResponse =
         when (result) {
             is Ok ->
-                DirectionsAvailableResponse.DirectionsAvailable(result.okValue.map(::toStepDirectionResponse))
+                when (result.okValue) {
+                    is Position.Status.OutsideTheMaze ->
+                        PlayerStatusResponse.GotOut("You are out of the maze!!")
+                    is Position.Status.InsideTheMaze ->
+                        PlayerStatusResponse.StillIn(result.okValue.directionsAvailable.map(::toStepDirectionResponse))
+                }
             is Err ->
-                DirectionsAvailableResponse.Failure("Something went wrong with your request: maybe the gameID or playerName is invalid?")
+                PlayerStatusResponse.Failure("Something went wrong: maybe the gameID or playerName is invalid?")
         }
 
     fun toAddAPlayerResponse(result: Result<String, AddAPlayerError>): AddAPlayerResponse =

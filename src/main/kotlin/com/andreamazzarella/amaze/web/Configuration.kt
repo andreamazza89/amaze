@@ -16,8 +16,9 @@ class Configuration() {
             .add(StepResultResponse.NewPosition::class)
             .add(AddAPlayerResponse.Success::class)
             .add(AddAPlayerResponse.Failure::class)
-            .add(DirectionsAvailableResponse.DirectionsAvailable::class)
-            .add(DirectionsAvailableResponse.Failure::class)
+            .add(PlayerStatusResponse.StillIn::class)
+            .add(PlayerStatusResponse.GotOut::class)
+            .add(PlayerStatusResponse.Failure::class)
             .add(CellResponse.Wall::class)
             .add(CellResponse.Floor::class)
     }

@@ -45,7 +45,7 @@ class MazeTest {
     }
 
     @Test
-    fun `knows what directions are available (example one - DOWN)`() {
+    fun `knows the status of a position (example one - DOWN available)`() {
         val maze = aMazeFromADrawing(
             """
                 ⬛⚪⬛⬛⬛
@@ -54,13 +54,13 @@ class MazeTest {
             """.trimIndent()
         )
 
-        val directions = maze.directionsAvailableFor(pos(0, 1))
+        val status = maze.positionStatus(pos(0, 1))
 
-        assertEquals(listOf(DOWN), directions)
+        assertEquals(listOf(DOWN), (status as Position.Status.InsideTheMaze).directionsAvailable)
     }
 
     @Test
-    fun `knows what directions are available (example two - DOWN RIGHT LEFT)`() {
+    fun `knows the status of a position (example two - DOWN RIGHT LEFT available)`() {
         val maze = aMazeFromADrawing(
             """
                 ⬛⬜⬛⬛⬛
@@ -70,11 +70,25 @@ class MazeTest {
             """.trimIndent()
         )
 
-        val directions = maze.directionsAvailableFor(pos(1, 2))
+        val status = maze.positionStatus(pos(1, 2))
 
-        assertEquals(listOf(RIGHT, DOWN, LEFT), directions)
+        assertEquals(listOf(RIGHT, DOWN, LEFT), (status as Position.Status.InsideTheMaze).directionsAvailable)
     }
 
+    @Test
+    fun `knows the status of a position (example three - got to the exit)`() {
+        val maze = aMazeFromADrawing(
+            """
+                ⬛⬜⬛⬛⬛
+                ⬛⬜⬜⬜⬤
+                ⬛⬛⬛⬛⬛
+            """.trimIndent()
+        )
+
+        val status = maze.positionStatus(pos(1, 4))
+
+        assertEquals(Position.Status.OutsideTheMaze, status)
+    }
 
     @Test
     fun `takes a step up in the maze`() {

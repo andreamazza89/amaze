@@ -18,7 +18,13 @@ data class Maze(
     val entrance: Position,
     private val exit: Position
 ) {
-    fun directionsAvailableFor(currentPosition: Position): List<StepDirection> =
+    fun positionStatus(currentPosition: Position): Position.Status =
+        when {
+            (currentPosition == exit) -> Position.Status.OutsideTheMaze
+            else -> Position.Status.InsideTheMaze(positionsAvailable(currentPosition))
+        }
+
+    private fun positionsAvailable(currentPosition: Position) =
         StepDirection.values()
             .filter { direction -> cellNearby(currentPosition, direction) is Floor }
 
@@ -43,15 +49,20 @@ data class Maze(
 sealed class Cell {
     abstract val position: Position
 }
+
 data class Floor(override val position: Position) : Cell()
 data class Wall(override val position: Position) : Cell()
 data class OutsideMaze(override val position: Position) : Cell()
-
 data class StepError(val message: String = "you hit a wall")
 
 enum class StepDirection { UP, RIGHT, DOWN, LEFT }
 
 data class Position(val row: Row, val column: Column) {
+
+    sealed class Status {
+        object OutsideTheMaze : Status()
+        data class InsideTheMaze(val directionsAvailable: List<StepDirection>) : Status()
+    }
 
     fun x(): Int = this.column.columnNumber
     fun y(): Int = this.row.rowNumber

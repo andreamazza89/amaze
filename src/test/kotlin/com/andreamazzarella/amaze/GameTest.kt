@@ -40,15 +40,16 @@ class GameTest {
     }
 
     @Test
-    fun `a player can query for directions available`() {
+    fun `a player can query for their status`() {
         val maze = aMazeFromADrawing(DEFAULT_MAZE)
 
         val game = Game(maze = maze)
             .addPlayer("runner")
             .okOrFail()
 
-        assertOk(game.directionsAvailableFor("runner")) {
-            assertEquals(listOf(DOWN), it)
+        assertOk(game.positionStatusFor("runner")) { status ->
+            status as Position.Status.InsideTheMaze
+            assertEquals(listOf(DOWN), status.directionsAvailable)
         }
     }
 

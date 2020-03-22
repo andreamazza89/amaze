@@ -2,8 +2,8 @@ package com.andreamazzarella.amaze.web
 
 import com.andreamazzarella.amaze.core.Game
 import com.andreamazzarella.amaze.core.usecases.AddAPlayer
-import com.andreamazzarella.amaze.core.usecases.DirectionsAvailable
 import com.andreamazzarella.amaze.core.usecases.GetAGame
+import com.andreamazzarella.amaze.core.usecases.PlayerStatus
 import com.andreamazzarella.amaze.core.usecases.StartAGame
 import com.andreamazzarella.amaze.core.usecases.TakeAStep
 import com.andreamazzarella.amaze.persistence.GameRepository
@@ -30,9 +30,9 @@ class Queries : GraphQLQueryResolver {
     fun gamesAvailable(): List<GameId> =
         GameRepository.findAll().map(Game::id)
 
-    fun directionsAvailable(gameId: GameId, playerName: String): DirectionsAvailableResponse =
-        DirectionsAvailable.doIt(gameId, playerName)
-            .pipe(Mappers::toDirectionsAvailableResponse)
+    fun playerStatus(gameId: GameId, playerName: String): PlayerStatusResponse =
+        PlayerStatus.doIt(gameId, playerName)
+            .pipe(Mappers::toStatusResponse)
 
     fun sampleQuery(): SampleType =
         SampleType(

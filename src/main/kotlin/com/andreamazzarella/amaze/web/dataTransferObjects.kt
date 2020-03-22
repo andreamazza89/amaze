@@ -39,9 +39,10 @@ sealed class AddAPlayerResponse {
     data class Failure(val message: String?) : AddAPlayerResponse()
 }
 
-sealed class DirectionsAvailableResponse {
-    data class DirectionsAvailable(val directions: List<StepDirectionResponse>) : DirectionsAvailableResponse()
-    data class Failure(val message: String?) : DirectionsAvailableResponse()
+sealed class PlayerStatusResponse {
+    data class StillIn(val directionsAvailable: List<StepDirectionResponse>) : PlayerStatusResponse()
+    data class GotOut(val message: String?) : PlayerStatusResponse()
+    data class Failure(val message: String?) : PlayerStatusResponse()
 }
 
 typealias GameId = String

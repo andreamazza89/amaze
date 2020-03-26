@@ -1,5 +1,7 @@
 package com.andreamazzarella.amaze.web
 
+import java.util.UUID
+
 enum class StepDirectionRequest { NORTH, EAST, SOUTH, WEST }
 typealias StepDirectionResponse = StepDirectionRequest
 
@@ -35,7 +37,7 @@ sealed class StepResultResponse {
 }
 
 sealed class AddAPlayerResponse {
-    data class Success(val message: String?) : AddAPlayerResponse()
+    data class Success(val token: UUID) : AddAPlayerResponse()
     data class Failure(val message: String?) : AddAPlayerResponse()
 }
 

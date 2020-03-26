@@ -16,6 +16,7 @@ import com.coxautodev.graphql.tools.GraphQLSubscriptionResolver
 import org.reactivestreams.Publisher
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
+import java.util.UUID
 
 // Queries
 
@@ -50,16 +51,20 @@ class Mutations(@Autowired val gamePublishersBuilder: GamePublishers) : GraphQLM
 
     fun startAGame(): GameId = StartAGame.doIt()
 
-    fun addAPlayerToAGame(gameId: GameId, playerName: String): AddAPlayerResponse =
-        AddAPlayer.doIt(gameId, playerName)
+    fun addAPlayerToAGame(gameId: GameId, playerName: String): AddAPlayerResponse {
+        val token = PlayerTokens.generate(gameId, playerName)
+        return AddAPlayer.doIt(gameId, playerName)
             .runOnOk { gamePublishersBuilder.triggerGameStatusUpdate(gameId) }
-            .pipe(Mappers::toAddAPlayerResponse)
+            .pipe { Mappers.toAddAPlayerResponse(it, token) }
+    }
 
-    fun takeAStep(gameId: GameId, playerName: String, stepDirection: StepDirectionRequest): StepResultResponse =
-        Mappers.toStepDirection(stepDirection)
+    fun takeAStep(gameId: GameId, playerName: String, stepDirection: StepDirectionRequest, token: UUID): StepResultResponse {
+        PlayerTokens.checkPlayerIsLegit(gameId, playerName, token)
+        return Mappers.toStepDirection(stepDirection)
             .pipe { TakeAStep.doIt(gameId, playerName, it) }
             .runOnOk { gamePublishersBuilder.triggerGameStatusUpdate(gameId) }
             .pipe { Mappers.toTakeAStepResponse(it) }
+    }
 }
 
 // Subscriptions

@@ -19,7 +19,7 @@ type AThing {
 type Mutation {
     startAGame: ID!
     addAPlayerToAGame(gameId: ID!, playerName: String!): AddAPlayerResponse!
-    takeAStep(gameId: ID!, playerName: String!, stepDirection: Direction!): StepResult!
+    takeAStep(gameId: ID!, playerName: String!, stepDirection: Direction!, token: ID!): StepResult!
 }
 
 type Subscription {
@@ -29,7 +29,7 @@ type Subscription {
 union AddAPlayerResponse = Success | Failure
 
 type Success {
-    message: String
+    token: ID!
 }
 
 type Failure {

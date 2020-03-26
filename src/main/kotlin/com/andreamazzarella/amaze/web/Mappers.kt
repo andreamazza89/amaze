@@ -14,6 +14,7 @@ import com.andreamazzarella.amaze.core.usecases.TakeAStepError
 import com.andreamazzarella.amaze.utils.Err
 import com.andreamazzarella.amaze.utils.Ok
 import com.andreamazzarella.amaze.utils.Result
+import java.util.UUID
 
 object Mappers {
     // Domain --> Response
@@ -37,9 +38,9 @@ object Mappers {
                 PlayerStatusResponse.Failure("Something went wrong: maybe the gameID or playerName is invalid?")
         }
 
-    fun toAddAPlayerResponse(result: Result<String, AddAPlayerError>): AddAPlayerResponse =
+    fun toAddAPlayerResponse(result: Result<String, AddAPlayerError>, playerToken: UUID): AddAPlayerResponse =
         when (result) {
-            is Ok -> AddAPlayerResponse.Success("player added")
+            is Ok -> AddAPlayerResponse.Success(playerToken)
             is Err -> AddAPlayerResponse.Failure("could not add player")
         }
 

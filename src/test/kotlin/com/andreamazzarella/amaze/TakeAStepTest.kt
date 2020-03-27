@@ -21,7 +21,7 @@ class TakeAStepTest {
 
         AddAPlayer.doIt(gameId, "runner 1")
 
-        TakeAStep.doIt(gameId, "runner 1", DOWN)
+        TakeAStep.doIt(gameId, "runner 1", DOWN, true)
         val gameUpdated = GetAGame.doIt(gameId)
 
         assertOk(gameUpdated) { it.playersPositions() == listOf(Pair("runner 1", Position(Row(1), Column(1)))) }
@@ -31,8 +31,19 @@ class TakeAStepTest {
     fun `a player cannot take a step when they are not in a game`() {
         val gameId = StartAGame.doIt()
 
-        val takeAStepResult = TakeAStep.doIt(gameId, "runner 1", DOWN)
+        val takeAStepResult = TakeAStep.doIt(gameId, "runner 1", DOWN, true)
 
         assertIsError(TakeAStepError.PlayerNotInThisGame, takeAStepResult)
+    }
+
+    @Test
+    fun `a player cannot take a step when they have an invalid token`() {
+        val gameId = StartAGame.doIt()
+
+        AddAPlayer.doIt(gameId, "runner 1")
+
+        val takeAStepResult = TakeAStep.doIt(gameId, "runner 1", DOWN, false)
+
+        assertIsError(TakeAStepError.TokenIsNotValid, takeAStepResult)
     }
 }

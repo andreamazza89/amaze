@@ -59,9 +59,9 @@ class Mutations(@Autowired val gamePublishersBuilder: GamePublishers) : GraphQLM
     }
 
     fun takeAStep(gameId: GameId, playerName: String, stepDirection: StepDirectionRequest, token: UUID): StepResultResponse {
-        PlayerTokens.checkPlayerIsLegit(gameId, playerName, token)
+        val tokenIsValid = PlayerTokens.checkPlayerIsLegit(gameId, playerName, token)
         return Mappers.toStepDirection(stepDirection)
-            .pipe { TakeAStep.doIt(gameId, playerName, it) }
+            .pipe { TakeAStep.doIt(gameId, playerName, it, tokenIsValid) }
             .runOnOk { gamePublishersBuilder.triggerGameStatusUpdate(gameId) }
             .pipe { Mappers.toTakeAStepResponse(it) }
     }

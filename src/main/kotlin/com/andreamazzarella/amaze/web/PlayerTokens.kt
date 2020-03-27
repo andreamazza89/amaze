@@ -11,16 +11,9 @@ object PlayerTokens {
         return token
     }
 
-    fun checkPlayerIsLegit(gameId: GameId, playerName: PlayerName, tokenGiven: Token) {
-        val tokenFound = tokens[Pair(gameId, playerName)]
-
-        if (tokenFound != tokenGiven) {
-            throw InvalidPlayerToken
-        }
-    }
+    fun checkPlayerIsLegit(gameId: GameId, playerName: PlayerName, tokenGiven: Token): Boolean =
+        tokens[Pair(gameId, playerName)] == tokenGiven
 }
-
-object InvalidPlayerToken : RuntimeException()
 
 typealias PlayerName = String
 typealias Token = UUID

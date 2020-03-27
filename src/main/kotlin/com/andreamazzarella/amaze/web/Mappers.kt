@@ -70,6 +70,7 @@ object Mappers {
             TakeAStepError.GameDoesNotExist -> StepResultResponse.GameDoesNotExist("could not find your maze")
             TakeAStepError.InvalidStep -> StepResultResponse.HitAWall("you hit a wall")
             TakeAStepError.PlayerNotInThisGame -> StepResultResponse.PlayerNotInThisGame("this player does not exist in this game")
+            TakeAStepError.TokenIsNotValid -> StepResultResponse.TokenIsNotValid("The token you provided is not valid")
         }
 
     private fun toStepDirectionResponse(stepDirection: StepDirection): StepDirectionResponse =

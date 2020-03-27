@@ -92,7 +92,7 @@ enum Direction {
     WEST
 }
 
-union StepResult = GameDoesNotExist | HitAWall | PlayerNotInThisGame | NewPosition
+union StepResult = GameDoesNotExist | HitAWall | PlayerNotInThisGame | TokenIsNotValid | NewPosition
 
 type GameDoesNotExist {
     message: String!
@@ -103,6 +103,10 @@ type HitAWall {
 }
 
 type PlayerNotInThisGame {
+    message: String!
+}
+
+type TokenIsNotValid {
     message: String!
 }
 

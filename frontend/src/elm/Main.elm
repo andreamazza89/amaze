@@ -1,15 +1,18 @@
 port module Main exposing (main)
 
 import Browser
-import Element exposing (fill, height, width)
+import Element exposing (centerX, centerY, fill, fillPortion, height, maximum, mouseOver, none, padding, paddingXY, px, width)
 import Element.Background as Background
-import Element.Colours as Element
+import Element.Border as Border
+import Element.Button as Element
+import Element.Colours as Colours
 import Element.Font as Font
-import Element.Input
 import Element.LoadingSpinner
+import Element.Scale as Scale
 import Html exposing (Html)
 import Json.Decode as Decode
 import MazeApi
+import Utils.List as ListUtils
 
 
 
@@ -43,6 +46,7 @@ type Msg
     | ExistingGamesResponseReceived (Result () (List MazeApi.GameId))
     | StartAGameClicked
     | StartAGameResponseReceived (Result () MazeApi.GameId)
+    | ViewGameClicked MazeApi.GameId
 
 
 
@@ -81,17 +85,25 @@ update msg model =
         GameStatusResponseReceived gameId response ->
             ( WatchingAGame gameId <| MazeApi.fromResult response, subscribeToGameUpdates gameId )
 
+        ViewGameClicked gameId ->
+            watchGame gameId
+
 
 handleGameCreationResponse : Result () MazeApi.GameId -> ( Model, Cmd Msg )
 handleGameCreationResponse response =
     case response of
         Ok gameId ->
-            ( WatchingAGame gameId MazeApi.Loading
-            , MazeApi.gameStatus gameId (GameStatusResponseReceived gameId)
-            )
+            watchGame gameId
 
         Err _ ->
             ( SelectingAGame MazeApi.Failed, Cmd.none )
+
+
+watchGame : MazeApi.GameId -> ( Model, Cmd Msg )
+watchGame gameId =
+    ( WatchingAGame gameId MazeApi.Loading
+    , MazeApi.gameStatus gameId (GameStatusResponseReceived gameId)
+    )
 
 
 decodeGameStatus : MazeApi.GameId -> Decode.Value -> Model -> ( Model, Cmd msg )
@@ -135,20 +147,26 @@ port gameUpdates : String -> Cmd msg
 
 view : Model -> Html Msg
 view model =
-    Element.layout [] <| view_ model
+    Element.layout [ width fill ] <| view_ model
 
 
 view_ : Model -> Element.Element Msg
 view_ model =
     case model of
         SelectingAGame gamesAvailable ->
-            Element.column []
-                [ Element.Input.button []
-                    { onPress = Just StartAGameClicked
-                    , label = Element.text "start a game"
-                    }
-                , Element.text "---------------"
-                , viewGamesAvailable gamesAvailable
+            Element.row [ width fill, height fill ]
+                [ Element.el
+                    [ width <| fillPortion 1
+                    , height fill
+                    , mouseOver [ Background.color Colours.green ]
+                    ]
+                    (Element.button [ centerX, centerY ] "START A NEW GAME" StartAGameClicked)
+                , Element.el
+                    [ width <| fillPortion 1
+                    , height fill
+                    , mouseOver [ Background.color Colours.green ]
+                    ]
+                    (viewGamesAvailable gamesAvailable)
                 ]
 
         WatchingAGame gameId gameStatus ->
@@ -170,7 +188,7 @@ view_ model =
                         ]
 
 
-viewGamesAvailable : MazeApi.Webdata (List MazeApi.GameId) -> Element.Element msg
+viewGamesAvailable : MazeApi.Webdata (List MazeApi.GameId) -> Element.Element Msg
 viewGamesAvailable gamesAvailable =
     case gamesAvailable of
         MazeApi.Loading ->
@@ -180,9 +198,20 @@ viewGamesAvailable gamesAvailable =
             Element.text "Could not load existing games"
 
         MazeApi.Loaded gameIds ->
-            Element.column [] <|
-                Element.text "vvvvvvv Join an existing game vvvvvvv"
-                    :: List.map (\id -> Element.text (MazeApi.toString id)) gameIds
+            Element.column [ centerX, centerY, width fill ] <|
+                Element.el [ width fill, Border.widthEach { top = 0, left = 0, right = 0, bottom = 2 }, Border.color Colours.black, paddingXY 0 Scale.medium ] (Element.el [ centerX ] <| Element.text "Join an existing game")
+                    :: viewExistingGames gameIds
+
+
+viewExistingGames : List MazeApi.GameId -> List (Element.Element Msg)
+viewExistingGames gameIds =
+    ListUtils.chunk 4 gameIds
+        |> List.map (\ids -> Element.row [ padding Scale.large, centerX ] (List.map viewExistingGame ids))
+
+
+viewExistingGame : MazeApi.GameId -> Element.Element Msg
+viewExistingGame id =
+    Element.el [ padding Scale.medium ] (Element.button [ width <| px 100 ] (MazeApi.toString id) (ViewGameClicked id))
 
 
 viewGameStatus : MazeApi.GameStatus -> Element.Element msg
@@ -209,13 +238,13 @@ viewCell cell_ =
 
 wall : Element.Element msg
 wall =
-    emptyCell [ Background.color Element.black ]
+    emptyCell [ Background.color Colours.black ]
 
 
 floor : List MazeApi.Playa -> Element.Element msg
 floor players =
     if List.isEmpty players then
-        emptyCell [ Background.color Element.white ]
+        emptyCell [ Background.color Colours.white ]
 
     else
         players
@@ -238,19 +267,19 @@ toColour : MazeApi.PlayerColour -> Element.Color
 toColour playerColour =
     case playerColour of
         MazeApi.Blue ->
-            Element.blue
+            Colours.blue
 
         MazeApi.Red ->
-            Element.red
+            Colours.red
 
         MazeApi.Green ->
-            Element.green
+            Colours.green
 
         MazeApi.Purple ->
-            Element.purple
+            Colours.purple
 
         MazeApi.Brown ->
-            Element.brown
+            Colours.brown
 
 
 cell : List (Element.Attribute msg) -> Element.Element msg -> Element.Element msg

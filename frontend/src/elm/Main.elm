@@ -158,6 +158,8 @@ view_ model =
                 [ Element.el
                     [ width <| fillPortion 1
                     , height fill
+                    , Border.widthEach { right = 1, top = 0, left = 0, bottom = 0 }
+                    , Border.color Colours.black
                     , mouseOver [ Background.color Colours.green ]
                     ]
                     (Element.button [ centerX, centerY ] "START A NEW GAME" StartAGameClicked)
@@ -181,11 +183,23 @@ view_ model =
                     Element.text "there was an error loading your game - please refresh the page and try again"
 
                 MazeApi.Loaded gameStatus_ ->
-                    Element.column []
-                        [ Element.text <| "watching game " ++ MazeApi.toString gameId
-                        , viewGameStatus gameStatus_
-                        , viewPlayers gameStatus_
+                    Element.row [ height fill, width fill ]
+                        [ viewGameInfo gameId gameStatus_
+                        , viewMaze gameStatus_
                         ]
+
+
+viewGameInfo : MazeApi.GameId -> MazeApi.GameStatus -> Element.Element msg
+viewGameInfo gameId gameStatus_ =
+    Element.column
+        [ paddingXY Scale.small Scale.small
+        , Border.widthEach { right = 1, top = 0, left = 0, bottom = 0 }
+        , Border.color Colours.black
+        , height fill
+        ]
+        [ Element.text <| "GAME ID: " ++ MazeApi.toString gameId
+        , viewPlayers gameStatus_
+        ]
 
 
 viewGamesAvailable : MazeApi.Webdata (List MazeApi.GameId) -> Element.Element Msg
@@ -214,11 +228,11 @@ viewExistingGame id =
     Element.el [ padding Scale.medium ] (Element.button [ width <| px 100 ] (MazeApi.toString id) (ViewGameClicked id))
 
 
-viewGameStatus : MazeApi.GameStatus -> Element.Element msg
-viewGameStatus gameStatus =
+viewMaze : MazeApi.GameStatus -> Element.Element msg
+viewMaze gameStatus =
     gameStatus.maze
         |> List.map viewRow
-        |> Element.column []
+        |> Element.column [ padding Scale.medium, centerX ]
 
 
 viewRow : MazeApi.RowOfCells -> Element.Element msg
@@ -302,9 +316,9 @@ viewPlayers : MazeApi.GameStatus -> Element.Element msg
 viewPlayers gameStatus =
     MazeApi.allPlayersInAGame gameStatus
         |> List.map viewPlayer
-        |> Element.column []
+        |> Element.column [ centerX ]
 
 
 viewPlayer : MazeApi.Playa -> Element.Element msg
 viewPlayer player =
-    Element.row [ Font.color <| toColour <| MazeApi.colour player ] [ Element.text <| MazeApi.name player ]
+    Element.row [ Font.color <| toColour <| MazeApi.colour player, padding Scale.small, centerX ] [ Element.text <| MazeApi.name player ]

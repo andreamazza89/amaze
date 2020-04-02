@@ -8,8 +8,6 @@ import com.github.kittinunf.fuel.httpPost
 
 object WallFollower {
     fun solve(facing: AbsoluteDirection) {
-        Thread.sleep(150)
-
         when (val playerStatus = MazeApi.getPlayerStatus()) {
             is PlayerStatus.Exited -> println("You're out!!")
             is PlayerStatus.Running -> doSolve(facing, playerStatus.directionsAvailable)
@@ -115,27 +113,28 @@ enum class RelativeDirection {
 }
 
 object MazeApi {
-    const val PLAYER_NAME = "andrea"
-    const val GAME_ID = "dl97d2b"
+    private const val PLAYER_NAME = "andrea"
+    private const val PLAYER_TOKEN = "49e3787f-6f57-4f73-ae08-a5c4cc26fd0e"
+    private const val GAME_ID = "mc95lj4"
 
     fun getPlayerStatus(): PlayerStatus {
         val query = """
             query {
-                directionsAvailable(playerName: "$PLAYER_NAME", gameId: "$GAME_ID") {
-                    ... on DirectionsAvailable {
-                        directions
+                playerStatus(playerName: "$PLAYER_NAME", gameId: "$GAME_ID") {
+                    ... on StillIn {
+                        directionsAvailable
                     }
                 }
             }
         """.trimIndent()
-        val directionsAvailable = MazeApi.postQuery(query).directions
+        val directionsAvailable = MazeApi.postQuery(query).directionsAvailable
         return PlayerStatus.Running(directionsAvailable)
     }
 
     fun takeTheStep(directionToGo: AbsoluteDirection) {
         val mutation = """
             mutation {
-                takeAStep(playerName: "$PLAYER_NAME", gameId: "$GAME_ID", stepDirection: ${directionToGo.name}) {
+                takeAStep(playerName: "$PLAYER_NAME", gameId: "$GAME_ID", stepDirection: ${directionToGo.name}, token: "$PLAYER_TOKEN") {
                   __typename
                 }
             }
@@ -156,12 +155,12 @@ object MazeApi {
                 .httpPost()
                 .jsonBody(GraphQLQuery(query))
                 .responseObject<Response>()
-        return result.fold({ it.data.directionsAvailable }, { throw RuntimeException("your query failed") })
+        return result.fold({ it.data.playerStatus }, { throw RuntimeException("your query failed") })
     }
 
     data class GraphQLQuery(val query: String)
 
     data class Response(var data: Data)
-    data class Data(var directionsAvailable: DirectionsResponse)
-    data class DirectionsResponse(val directions: List<AbsoluteDirection>)
+    data class Data(var playerStatus: DirectionsResponse)
+    data class DirectionsResponse(val directionsAvailable: List<AbsoluteDirection>)
 }

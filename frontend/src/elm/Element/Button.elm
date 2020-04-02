@@ -16,13 +16,12 @@ button attributes text msg =
             ++ [ Border.width 2
                , Border.rounded 3
                , Element.pointer
-               , Border.color Colours.brown
+               , Border.color Colours.black
                , Background.color Colours.white
                , Font.color Colours.black
                , Element.paddingXY Scale.small Scale.small
                , Element.mouseOver
-                    [ Background.color Colours.blue
-                    , Font.color Colours.white
+                    [ Font.color Colours.blue
                     ]
                ]
         )

@@ -154,19 +154,17 @@ view_ : Model -> Element.Element Msg
 view_ model =
     case model of
         SelectingAGame gamesAvailable ->
-            Element.row [ width fill, height fill ]
+            Element.row [ width fill, height fill, Background.image "http://localhost:8080/maze_background.png" ]
                 [ Element.el
                     [ width <| fillPortion 1
                     , height fill
-                    , Border.widthEach { right = 1, top = 0, left = 0, bottom = 0 }
-                    , Border.color Colours.black
-                    , mouseOver [ Background.color Colours.lightGrey ]
+                    , Border.widthEach { right = 2, top = 0, left = 0, bottom = 0 }
+                    , Border.color Colours.lightGrey
                     ]
                     (Element.button [ centerX, centerY ] "START A NEW GAME" StartAGameClicked)
                 , Element.el
                     [ width <| fillPortion 1
                     , height fill
-                    , mouseOver [ Background.color Colours.lightGrey ]
                     ]
                     (viewGamesAvailable gamesAvailable)
                 ]
@@ -212,14 +210,18 @@ viewGamesAvailable gamesAvailable =
 
         MazeApi.Loaded gameIds ->
             Element.column [ centerX, centerY, width fill ] <|
-                Element.el [ width fill, Border.widthEach { top = 0, left = 0, right = 0, bottom = 1 }, Border.color Colours.black, paddingXY 0 Scale.medium ] (Element.el [ centerX ] <| Element.text "Join an existing game")
+                Element.el [ width fill, Border.widthEach { top = 0, left = 0, right = 0, bottom = 2 }, Border.color Colours.lightGrey, paddingXY 0 Scale.medium ] (Element.el [ centerX, Background.color Colours.lightGrey, padding Scale.extraSmall ] <| Element.text "JOIN EXISTING GAMES")
                     :: viewExistingGames gameIds
 
 
 viewExistingGames : List MazeApi.GameId -> List (Element.Element Msg)
 viewExistingGames gameIds =
-    ListUtils.chunk 4 gameIds
-        |> List.map (\ids -> Element.row [ padding Scale.large, centerX ] (List.map viewExistingGame ids))
+    if List.isEmpty gameIds then
+        [ Element.el [ centerX, padding Scale.medium, Font.color Colours.lightGrey ] <| Element.text "No existing games yet" ]
+
+    else
+        ListUtils.chunk 4 gameIds
+            |> List.map (\ids -> Element.row [ padding Scale.large, centerX ] (List.map viewExistingGame ids))
 
 
 viewExistingGame : MazeApi.GameId -> Element.Element Msg

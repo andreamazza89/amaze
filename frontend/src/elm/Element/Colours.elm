@@ -35,7 +35,7 @@ lightGrey =
 
 grey : Element.Color
 grey =
-    Element.rgb255 162 174 186
+    Element.rgb255 189 195 199
 
 
 purple : Element.Color

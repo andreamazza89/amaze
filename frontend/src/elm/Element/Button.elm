@@ -18,6 +18,7 @@ button attributes text msg =
                , Element.pointer
                , Border.color Colours.black
                , Background.color Colours.white
+               , Element.alpha 0.7
                , Font.color Colours.black
                , Element.paddingXY Scale.small Scale.small
                , Element.mouseOver

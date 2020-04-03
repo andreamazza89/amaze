@@ -181,7 +181,7 @@ view_ model =
                     Element.text "there was an error loading your game - please refresh the page and try again"
 
                 MazeApi.Loaded gameStatus_ ->
-                    Element.row [ height fill, width fill, Background.color Colours.lightGrey ]
+                    Element.row [ height fill, width fill, Background.color Colours.grey ]
                         [ viewGameInfo gameId gameStatus_
                         , viewMaze gameStatus_
                         ]
@@ -210,7 +210,7 @@ viewGamesAvailable gamesAvailable =
 
         MazeApi.Loaded gameIds ->
             Element.column [ centerX, centerY, width fill ] <|
-                Element.el [ width fill, Border.widthEach { top = 0, left = 0, right = 0, bottom = 2 }, Border.color Colours.lightGrey, paddingXY 0 Scale.medium ] (Element.el [ centerX, Background.color Colours.lightGrey, padding Scale.extraSmall ] <| Element.text "JOIN EXISTING GAMES")
+                Element.el [ width fill, Border.widthEach { top = 0, left = 0, right = 0, bottom = 2 }, Border.color Colours.lightGrey, paddingXY 0 Scale.large ] (Element.el [ centerX, Background.color Colours.lightGrey, padding Scale.extraSmall, Element.alpha 0.7, Border.rounded 2 ] <| Element.text "JOIN EXISTING GAMES:")
                     :: viewExistingGames gameIds
 
 

@@ -10,7 +10,7 @@ import java.util.UUID
 val MAZE_SOURCE: String = ResourceUtils.getFile("classpath:mediumMaze.json").pipe { Files.readString(it.toPath())}
 const val MAZE_SIZE_LENGTH = 41
 val ENTRANCE = Position(Position.Row(0), Position.Column(1))
-val EXIT = Position(Position.Row(41), Position.Column(40))
+val EXIT = Position(Position.Row(40), Position.Column(39))
 
 val mediumMaze: Maze by lazy {
     ObjectMapper().readValue<List<Int>>(MAZE_SOURCE)

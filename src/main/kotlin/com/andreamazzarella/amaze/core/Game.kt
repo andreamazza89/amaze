@@ -10,7 +10,7 @@ import com.andreamazzarella.amaze.utils.pipe
 
 data class Game(
     val id: GameId = generateGameId(),
-    val maze: Maze,
+    val maze: Maze = mediumMaze,
     private val players: List<Player> = emptyList()
 ) {
 

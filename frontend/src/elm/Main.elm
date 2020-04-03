@@ -302,8 +302,8 @@ toColour playerColour =
 cell : List (Element.Attribute msg) -> Element.Element msg -> Element.Element msg
 cell attributes cellContent =
     Element.el
-        ([ Element.width (Element.fill |> Element.minimum 12)
-         , Element.height (Element.fill |> Element.minimum 12)
+        ([ Element.width (Element.fill |> Element.minimum 15)
+         , Element.height (Element.fill |> Element.minimum 15)
          ]
             ++ attributes
         )

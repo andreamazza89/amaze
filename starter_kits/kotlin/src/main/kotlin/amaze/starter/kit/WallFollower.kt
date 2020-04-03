@@ -27,9 +27,9 @@ object WallFollower {
         val relativeDirectionsAvailable = directionsAvailable.map { it.toRelative(facing) }
 
         return when {
-            relativeDirectionsAvailable.contains(LEFT) -> LEFT.toAbsoluteDirection(facing)
-            relativeDirectionsAvailable.contains(FORWARD) -> FORWARD.toAbsoluteDirection(facing)
             relativeDirectionsAvailable.contains(RIGHT) -> RIGHT.toAbsoluteDirection(facing)
+            relativeDirectionsAvailable.contains(FORWARD) -> FORWARD.toAbsoluteDirection(facing)
+            relativeDirectionsAvailable.contains(LEFT) -> LEFT.toAbsoluteDirection(facing)
             else -> BACKWARD.toAbsoluteDirection(facing)
         }
     }
@@ -113,9 +113,9 @@ enum class RelativeDirection {
 }
 
 object MazeApi {
-    private const val PLAYER_NAME = "andrea"
-    private const val PLAYER_TOKEN = "49e3787f-6f57-4f73-ae08-a5c4cc26fd0e"
-    private const val GAME_ID = "mc95lj4"
+    private const val PLAYER_NAME = "right-handed-guy"
+    private const val PLAYER_TOKEN = "31b4c8d3-60a4-41e5-94f9-24be16cd8e62"
+    private const val GAME_ID = "6hjs6b8"
 
     fun getPlayerStatus(): PlayerStatus {
         val query = """

@@ -45,7 +45,7 @@ red =
 
 yellow : Element.Color
 yellow =
-    Element.rgb255 255 186 8
+    Element.rgb255 255 220 0
 
 
 white : Element.Color

@@ -12,19 +12,6 @@ const val DEFAULT_MAZE = """
                             ⬛⬛⬛⬛
                          """
 
-const val OTHER_MAZE = """
-                            ⬛⚪⬛⬛⬛⬛⬛⬛⬛⬛⬛⬛⬛⬤⬛
-                            ⬛⬜⬜⬜⬛⬛⬜⬜⬜⬛⬛⬜⬜⬜⬛
-                            ⬛⬜⬛⬜⬛⬛⬛⬜⬛⬛⬛⬜⬛⬛⬛
-                            ⬛⬜⬛⬜⬛⬛⬛⬜⬜⬜⬛⬜⬜⬜⬛
-                            ⬛⬜⬛⬜⬛⬛⬛⬜⬛⬜⬛⬜⬛⬜⬛
-                            ⬛⬜⬛⬛⬛⬛⬛⬜⬛⬜⬛⬛⬛⬜⬛
-                            ⬛⬜⬛⬛⬛⬜⬜⬜⬛⬜⬜⬜⬜⬜⬛
-                            ⬛⬜⬛⬛⬛⬛⬛⬛⬛⬛⬛⬛⬛⬜⬛
-                            ⬛⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬛
-                            ⬛⬛⬛⬛⬛⬛⬛⬛⬛⬛⬛⬛⬛⬛⬛
-                         """
-
 fun aMazeFromADrawing(
     drawing: String,
     entrance: Position = Position(Row(0), Column(1)),

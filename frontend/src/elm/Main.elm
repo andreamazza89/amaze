@@ -1,7 +1,7 @@
 port module Main exposing (main)
 
 import Browser
-import Element exposing (alignRight, centerX, centerY, fill, fillPortion, height, maximum, mouseOver, none, padding, paddingEach, paddingXY, px, width)
+import Element exposing (alignRight, centerX, centerY, fill, fillPortion, height, padding, paddingXY, px, width)
 import Element.Background as Background
 import Element.Border as Border
 import Element.Button as Element

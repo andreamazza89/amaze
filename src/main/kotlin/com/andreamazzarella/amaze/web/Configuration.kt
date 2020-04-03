@@ -13,6 +13,7 @@ class Configuration() {
             .add(StepResultResponse.HitAWall::class)
             .add(StepResultResponse.GameDoesNotExist::class)
             .add(StepResultResponse.PlayerNotInThisGame::class)
+            .add(StepResultResponse.PlayerGotOut::class)
             .add(StepResultResponse.TokenIsNotValid::class)
             .add(StepResultResponse.NewPosition::class)
             .add(AddAPlayerResponse.Success::class)

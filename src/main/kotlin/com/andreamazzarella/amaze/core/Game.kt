@@ -10,7 +10,7 @@ import com.andreamazzarella.amaze.utils.pipe
 
 data class Game(
     val id: GameId = generateGameId(),
-    val maze: Maze = mediumMaze,
+    val maze: Maze,
     private val players: List<Player> = emptyList()
 ) {
 
@@ -54,7 +54,13 @@ data class Game(
         direction: StepDirection
     ): Result<Position, StepError> =
         maze.takeAStep(currentPosition, direction)
-            .mapError { StepError.InvalidStep }
+            .mapError { err ->
+                when (err) {
+                    // how do we not make this look horrible 😓 soo much mapping, gotta try the new kotlin Results
+                    com.andreamazzarella.amaze.core.StepError.HitAWall -> StepError.HitAWall
+                    com.andreamazzarella.amaze.core.StepError.AlreadyGotOut -> StepError.AlreadyGotOut
+                }
+            }
 
     // Helpers
 
@@ -83,7 +89,8 @@ data class Game(
 
     sealed class StepError {
         object PlayerNotFound : StepError()
-        object InvalidStep : StepError()
+        object HitAWall : StepError()
+        object AlreadyGotOut : StepError()
     }
 }
 

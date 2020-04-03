@@ -34,6 +34,7 @@ sealed class StepResultResponse {
     data class HitAWall(val message: String) : StepResultResponse()
     data class PlayerNotInThisGame(val message: String) : StepResultResponse()
     data class TokenIsNotValid(val message: String) : StepResultResponse()
+    data class PlayerGotOut(val message: String) : StepResultResponse()
     data class NewPosition(val position: PositionResponse) : StepResultResponse()
 }
 

@@ -10,7 +10,8 @@ import com.andreamazzarella.amaze.core.StepDirection.DOWN
 import com.andreamazzarella.amaze.core.StepDirection.LEFT
 import com.andreamazzarella.amaze.core.StepDirection.RIGHT
 import com.andreamazzarella.amaze.core.StepDirection.UP
-import com.andreamazzarella.amaze.core.StepError
+import com.andreamazzarella.amaze.core.StepError.AlreadyGotOut
+import com.andreamazzarella.amaze.core.StepError.HitAWall
 import com.andreamazzarella.amaze.core.aMazeFromADrawing
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
@@ -166,7 +167,7 @@ class MazeTest {
 
         val stepResult = maze.takeAStep(pos(1, 2), DOWN)
 
-        assertIsError(StepError(), stepResult)
+        assertIsError(HitAWall, stepResult)
     }
 
     @Test
@@ -181,7 +182,22 @@ class MazeTest {
 
         val stepResult = maze.takeAStep(pos(0, 1), UP)
 
-        assertIsError(StepError("you walked out of the maze"), stepResult)
+        assertIsError(HitAWall, stepResult)
+    }
+
+    @Test
+    fun `getting back into the maze is not allowed`() {
+        val maze = aMazeFromADrawing(
+            """
+                ⬛⬜⬛⬛⬛
+                ⬛⬜⬜⬜⬤
+                ⬛⬛⬛⬛⬛
+            """.trimIndent()
+        )
+
+        val stepResult = maze.takeAStep(pos(1, 4), LEFT)
+
+        assertIsError(AlreadyGotOut, stepResult)
     }
 
     private fun pos(row: Int, column: Int) = Position(Position.Row(row), Position.Column(column))

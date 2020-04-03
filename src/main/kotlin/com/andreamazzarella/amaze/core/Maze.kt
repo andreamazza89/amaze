@@ -7,6 +7,7 @@ import com.andreamazzarella.amaze.core.StepDirection.DOWN
 import com.andreamazzarella.amaze.core.StepDirection.LEFT
 import com.andreamazzarella.amaze.core.StepDirection.RIGHT
 import com.andreamazzarella.amaze.core.StepDirection.UP
+import com.andreamazzarella.amaze.core.StepError.HitAWall
 import com.andreamazzarella.amaze.utils.Err
 import com.andreamazzarella.amaze.utils.Ok
 import com.andreamazzarella.amaze.utils.Result
@@ -32,11 +33,12 @@ data class Maze(
             .filter { direction -> cellNearby(currentPosition, direction) is Floor }
 
     fun takeAStep(currentPosition: Position, direction: StepDirection): Result<Position, StepError> {
+        if (currentPosition == exit) return Err(StepError.AlreadyGotOut)
         val newPosition = currentPosition.nearby(direction)
         return when (cellAt(newPosition)) {
-            is Wall -> Err(StepError())
+            is Wall -> Err(HitAWall)
             is Floor -> Ok(newPosition)
-            is OutsideMaze -> Err(StepError("you walked out of the maze"))
+            is OutsideMaze -> Err(HitAWall)
         }
     }
 
@@ -57,7 +59,10 @@ sealed class Cell {
     data class OutsideMaze(override val position: Position) : Cell()
 }
 
-data class StepError(val message: String = "you hit a wall")
+sealed class StepError {
+    object HitAWall : StepError()
+    object AlreadyGotOut : StepError()
+}
 
 enum class StepDirection { UP, RIGHT, DOWN, LEFT }
 

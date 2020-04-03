@@ -6,6 +6,9 @@ import com.andreamazzarella.amaze.core.Position
 import com.andreamazzarella.amaze.core.Position.Column
 import com.andreamazzarella.amaze.core.Position.Row
 import com.andreamazzarella.amaze.core.StepDirection.DOWN
+import com.andreamazzarella.amaze.core.StepDirection.LEFT
+import com.andreamazzarella.amaze.core.StepDirection.RIGHT
+import com.andreamazzarella.amaze.core.aMazeFromADrawing
 import com.andreamazzarella.amaze.core.usecases.AddAPlayer
 import com.andreamazzarella.amaze.core.usecases.GetAGame
 import com.andreamazzarella.amaze.core.usecases.StartAGame
@@ -46,4 +49,27 @@ class TakeAStepTest {
 
         assertIsError(TakeAStepError.TokenIsNotValid, takeAStepResult)
     }
+
+    @Test
+    fun `a player cannot take a step when they have got out`() {
+        val gameId = StartAGame.doIt(
+            aMazeFromADrawing(
+                """
+                ⬛⚪⬛
+                ⬛⬜⬤
+                ⬛⬛⬛
+            """.trimIndent()
+            )
+        )
+
+        AddAPlayer.doIt(gameId, "runner 1")
+
+        TakeAStep.doIt(gameId, "runner 1", DOWN, true)
+        TakeAStep.doIt(gameId, "runner 1", RIGHT, true)
+
+        val takeAStepResult = TakeAStep.doIt(gameId, "runner 1", LEFT, true)
+
+        assertIsError(TakeAStepError.PlayerGotOut, takeAStepResult)
+    }
+
 }

@@ -1,11 +1,6 @@
-module Element.Colours exposing (almond, black, blue, brown, green, grey, lightGrey, purple, red, white, yellow)
+module Element.Colours exposing (black, blue, brown, green, grey, lightGrey, purple, red, white, yellow)
 
 import Element
-
-
-almond : Element.Color
-almond =
-    Element.rgb255 238 224 203
 
 
 black : Element.Color

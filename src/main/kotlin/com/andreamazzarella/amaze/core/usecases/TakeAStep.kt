@@ -34,7 +34,8 @@ object TakeAStep {
             .mapError { err ->
                 when (err) {
                     Game.StepError.PlayerNotFound -> TakeAStepError.PlayerNotInThisGame
-                    Game.StepError.InvalidStep -> TakeAStepError.InvalidStep
+                    Game.StepError.HitAWall -> TakeAStepError.InvalidStep
+                    Game.StepError.AlreadyGotOut -> TakeAStepError.PlayerGotOut
                 }
             }
 
@@ -55,4 +56,5 @@ sealed class TakeAStepError {
     object InvalidStep : TakeAStepError()
     object TokenIsNotValid : TakeAStepError()
     object PlayerNotInThisGame : TakeAStepError()
+    object PlayerGotOut : TakeAStepError()
 }

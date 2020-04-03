@@ -10,6 +10,7 @@ import Element.Font as Font
 import Element.LoadingSpinner
 import Element.Scale as Scale
 import Html exposing (Html)
+import Html.Attributes exposing (style)
 import Json.Decode as Decode
 import MazeApi
 import Utils.List as ListUtils
@@ -337,7 +338,12 @@ viewPlayer player =
 viewPlayerStatus : MazeApi.Player -> Element.Element msg
 viewPlayerStatus player =
     if MazeApi.solvedIt player then
-        Element.text "solved!!"
+        Element.el [ paddingXY Scale.small 0 ] <| Element.text "✅"
 
     else
-        Element.text "solving!!"
+        Element.el [ paddingXY Scale.small 0 ] <| Element.text "⌛"
+
+
+transition : String -> Element.Attribute msg
+transition property =
+    Element.htmlAttribute <| style "transition" property

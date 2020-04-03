@@ -59,8 +59,8 @@ object Mappers {
             }
         }
 
-    private fun toPlayerPositionResponse(player: Pair<String, Position>) =
-        PlayerPositionResponse(player.first, toPositionResponse(player.second))
+    private fun toPlayerPositionResponse(player: Triple<String, Position, Boolean>) =
+        PlayerInfoResponse(player.first, toPositionResponse(player.second), player.third)
 
     private fun toPositionResponse(position: Position) =
         PositionResponse(position.x(), position.y())

@@ -7,14 +7,15 @@ typealias StepDirectionResponse = StepDirectionRequest
 
 data class GameStatusResponse(
     val maze: MazeResponse,
-    val playersPositions: List<PlayerPositionResponse>
+    val players: List<PlayerInfoResponse>
 )
 
 data class MazeResponse(private val cells: List<CellResponse>)
 
-data class PlayerPositionResponse(
+data class PlayerInfoResponse(
     val playerName: String,
-    val position: PositionResponse
+    val position: PositionResponse,
+    val solvedIt: Boolean
 )
 
 sealed class CellResponse {

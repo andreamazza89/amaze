@@ -256,7 +256,7 @@ wall =
     emptyCell [ Background.color Colours.black ]
 
 
-floor : List MazeApi.Playa -> Element.Element msg
+floor : List MazeApi.Player -> Element.Element msg
 floor players =
     if List.isEmpty players then
         emptyCell [ Background.color Colours.white ]
@@ -268,7 +268,7 @@ floor players =
             |> cell []
 
 
-viewPlayerInMaze : MazeApi.Playa -> Element.Element msg
+viewPlayerInMaze : MazeApi.Player -> Element.Element msg
 viewPlayerInMaze player =
     Element.el
         [ width fill
@@ -322,6 +322,22 @@ viewPlayerNames gameStatus =
         |> Element.column [ width fill, height fill ]
 
 
-viewPlayer : MazeApi.Playa -> Element.Element msg
+viewPlayer : MazeApi.Player -> Element.Element msg
 viewPlayer player =
-    Element.row [ Font.color <| toColour <| MazeApi.colour player, padding Scale.small, alignRight ] [ Element.text <| MazeApi.name player ]
+    Element.row
+        [ Font.color <| toColour <| MazeApi.colour player
+        , padding Scale.small
+        , alignRight
+        ]
+        [ Element.text <| MazeApi.name player
+        , viewPlayerStatus player
+        ]
+
+
+viewPlayerStatus : MazeApi.Player -> Element.Element msg
+viewPlayerStatus player =
+    if MazeApi.solvedIt player then
+        Element.text "solved!!"
+
+    else
+        Element.text "solving!!"

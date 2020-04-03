@@ -2,7 +2,7 @@ module MazeApi exposing
     ( Cell(..)
     , GameId
     , GameStatus
-    , Playa
+    , Player
     , PlayerColour(..)
     , RowOfCells
     , Webdata(..)
@@ -14,6 +14,7 @@ module MazeApi exposing
     , gameStatusDecoder
     , gameSubscription
     , name
+    , solvedIt
     , startAGame
     , toString
     )
@@ -23,7 +24,7 @@ import Api.Object exposing (GameStatus)
 import Api.Object.Floor
 import Api.Object.GameStatus
 import Api.Object.Maze
-import Api.Object.PlayerPosition
+import Api.Object.PlayerInfo
 import Api.Object.Position
 import Api.Object.Wall
 import Api.Query
@@ -49,7 +50,7 @@ type alias RowOfCells =
 
 type Cell
     = Wall
-    | Floor (List Playa)
+    | Floor (List Player)
 
 
 type Player
@@ -58,16 +59,8 @@ type Player
 
 type alias PlayerDetails =
     { name : String
-    }
-
-
-type Playa
-    = Playa PlayaDetails
-
-
-type alias PlayaDetails =
-    { name : String
     , colour : PlayerColour
+    , solvedIt : Bool
     }
 
 
@@ -86,29 +79,34 @@ nColours n =
         |> List.take n
 
 
-buildPlayas : List String -> List Playa
-buildPlayas playerNames =
+buildPlayers : List ( String, Bool ) -> List Player
+buildPlayers playerNames =
     let
         colours =
             nColours <| List.length playerNames
     in
     List.map2 Tuple.pair playerNames colours
-        |> List.map buildPlaya
+        |> List.map buildPlayer
 
 
-buildPlaya : ( String, PlayerColour ) -> Playa
-buildPlaya ( name_, colour_ ) =
-    Playa { name = name_, colour = colour_ }
+buildPlayer : ( ( String, Bool ), PlayerColour ) -> Player
+buildPlayer ( ( name_, solvedIt_ ), colour_ ) =
+    Player { name = name_, colour = colour_, solvedIt = solvedIt_ }
 
 
-colour : Playa -> PlayerColour
-colour (Playa details) =
+colour : Player -> PlayerColour
+colour (Player details) =
     .colour details
 
 
-name : Playa -> String
-name (Playa details) =
+name : Player -> String
+name (Player details) =
     .name details
+
+
+solvedIt : Player -> Bool
+solvedIt (Player details) =
+    .solvedIt details
 
 
 type alias GameId =
@@ -127,18 +125,18 @@ type alias GameStatus =
     }
 
 
-allPlayersInAGame : GameStatus -> List Playa
+allPlayersInAGame : GameStatus -> List Player
 allPlayersInAGame gameStatus_ =
     List.foldl allPlayersInARow [] gameStatus_.maze
 
 
-allPlayersInARow : RowOfCells -> List Playa -> List Playa
+allPlayersInARow : RowOfCells -> List Player -> List Player
 allPlayersInARow row playersFromOtherRows =
     List.foldl allPlayersInACell [] row
         |> List.append playersFromOtherRows
 
 
-allPlayersInACell : Cell -> List Playa -> List Playa
+allPlayersInACell : Cell -> List Player -> List Player
 allPlayersInACell cell playersOnThisRow =
     case cell of
         Wall ->
@@ -190,6 +188,7 @@ type alias ApiMaze =
 type alias ApiRunner =
     { name : String
     , position : ApiPosition
+    , solvedIt : Bool
     }
 
 
@@ -273,14 +272,15 @@ gameSelection : SelectionSet ApiGameStatus Api.Object.GameStatus
 gameSelection =
     SelectionSet.map2 ApiGameStatus
         (Api.Object.GameStatus.maze mazeSelection)
-        (Api.Object.GameStatus.playersPositions playerSelection)
+        (Api.Object.GameStatus.players playerSelection)
 
 
-playerSelection : SelectionSet ApiRunner Api.Object.PlayerPosition
+playerSelection : SelectionSet ApiRunner Api.Object.PlayerInfo
 playerSelection =
-    SelectionSet.map2 ApiRunner
-        Api.Object.PlayerPosition.playerName
-        (Api.Object.PlayerPosition.position positionSelection)
+    SelectionSet.map3 ApiRunner
+        Api.Object.PlayerInfo.playerName
+        (Api.Object.PlayerInfo.position positionSelection)
+        Api.Object.PlayerInfo.solvedIt
 
 
 positionSelection : SelectionSet ApiPosition Api.Object.Position
@@ -369,18 +369,18 @@ fromApiCell apiPlayers apiCell =
             Wall
 
 
-playersAtThisCell : ApiPosition -> List ( Playa, ApiPosition ) -> List Playa
+playersAtThisCell : ApiPosition -> List ( Player, ApiPosition ) -> List Player
 playersAtThisCell cellPosition allPlayers =
     allPlayers
         |> List.filter (\( _, position ) -> position == cellPosition)
         |> List.map Tuple.first
 
 
-buildPlayasAndTheirPosition : List ApiRunner -> List ( Playa, ApiPosition )
+buildPlayasAndTheirPosition : List ApiRunner -> List ( Player, ApiPosition )
 buildPlayasAndTheirPosition apiPlayers =
     let
         players =
-            buildPlayas <| List.map .name apiPlayers
+            buildPlayers <| List.map (\p -> ( p.name, p.solvedIt )) apiPlayers
 
         positions =
             List.map .position apiPlayers

@@ -16,8 +16,8 @@ data class Game(
 
     // Query
 
-    fun playersPositions(): List<Pair<String, Position>> =
-        this.players.map { it.name to it.currentPosition }
+    fun playersPositions(): List<Triple<String, Position, Boolean>> =
+        this.players.map { Triple(it.name, it.currentPosition, maze.isExit(it.currentPosition)) }
 
     fun playerPosition(playerName: String): Result<Position, StepError> =
         findPlayer(playerName)

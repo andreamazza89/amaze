@@ -1,5 +1,6 @@
 package com.andreamazzarella.amaze.core
 
+
 import com.andreamazzarella.amaze.core.Cell.Floor
 import com.andreamazzarella.amaze.core.Cell.OutsideMaze
 import com.andreamazzarella.amaze.core.Cell.Wall
@@ -13,7 +14,6 @@ import com.andreamazzarella.amaze.utils.Ok
 import com.andreamazzarella.amaze.utils.Result
 import com.andreamazzarella.amaze.utils.pipe
 import java.util.UUID
-
 typealias MazeId = UUID
 
 data class Maze(
@@ -31,6 +31,9 @@ data class Maze(
     private fun positionsAvailable(currentPosition: Position) =
         StepDirection.values()
             .filter { direction -> cellNearby(currentPosition, direction) is Floor }
+
+    fun isExit(currentPosition: Position) =
+        currentPosition == exit
 
     fun takeAStep(currentPosition: Position, direction: StepDirection): Result<Position, StepError> {
         if (currentPosition == exit) return Err(StepError.AlreadyGotOut)

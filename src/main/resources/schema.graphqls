@@ -53,12 +53,13 @@ type GameInfo {
 
 type GameStatus {
     maze: Maze!,
-    playersPositions: [PlayerPosition!]!
+    players: [PlayerInfo!]!
 }
 
-type PlayerPosition {
+type PlayerInfo {
     playerName: String!
     position: Position!
+    solvedIt: Boolean!
 }
 
 type MazeInfo {

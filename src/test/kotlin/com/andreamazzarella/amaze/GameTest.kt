@@ -26,7 +26,7 @@ class GameTest {
             .addPlayer("runner")
             .map { it.playersPositions() }
 
-        assertOkEquals(listOf(Pair("runner", maze.entrance)), positions)
+        assertOkEquals(listOf(Triple("runner", maze.entrance, false)), positions)
     }
 
     @Test
@@ -76,8 +76,8 @@ class GameTest {
             .andThen { it.takeAStep("runner 2", DOWN) }
 
         val expectedNewPositions = listOf(
-            "runner 1" to Position(Row(1), Column(1)),
-            "runner 2" to Position(Row(1), Column(1))
+            Triple("runner 1", Position(Row(1), Column(1)), false),
+            Triple("runner 2", Position(Row(1), Column(1)), false)
         )
         assertOk(gameWithSteps) {
             assertEquals(expectedNewPositions, it.playersPositions())

@@ -7,12 +7,12 @@ import org.springframework.util.ResourceUtils
 import java.nio.file.Files
 import java.util.UUID
 
-val MAZE_SOURCE: String = ResourceUtils.getFile("classpath:bigMaze.json").pipe { Files.readString(it.toPath())}
-const val MAZE_SIZE_LENGTH = 81
+val MAZE_SOURCE: String = ResourceUtils.getFile("classpath:mediumMaze.json").pipe { Files.readString(it.toPath())}
+const val MAZE_SIZE_LENGTH = 41
 val ENTRANCE = Position(Position.Row(0), Position.Column(1))
-val EXIT = Position(Position.Row(81), Position.Column(80))
+val EXIT = Position(Position.Row(41), Position.Column(40))
 
-val bigMaze: Maze by lazy {
+val mediumMaze: Maze by lazy {
     ObjectMapper().readValue<List<Int>>(MAZE_SOURCE)
         .chunked(MAZE_SIZE_LENGTH)
         .mapIndexed { rowIndex, row ->

@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "schema": "elm-graphql http://localhost:8080/graphql --output src/elm",
-    "dev": "elm-typescript-interop && npm run schema && parcel src/index.html"
+    "dev": "elm-typescript-interop && npm run schema && parcel src/index.html --out-dir ../public"
   },
   "author": "",
   "license": "ISC",

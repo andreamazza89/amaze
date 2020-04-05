@@ -5,7 +5,7 @@ const app = Elm.Main.init({
     node: document.getElementById("elm")
 });
 
-const webSocket = new WebSocket('ws://localhost:8080/subscriptions');
+const webSocket = new WebSocket(`ws://${window.location.host}/subscriptions`);
 
 app.ports.gameUpdates.subscribe(subscription => {
     webSocket.send(JSON.stringify({query: subscription}));

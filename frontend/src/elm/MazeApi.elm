@@ -210,14 +210,14 @@ type ApiCell
 fetchExistingGames : (Result () (List GameId) -> msg) -> Cmd msg
 fetchExistingGames toMsg =
     Api.Query.gamesAvailable
-        |> Graphql.Http.queryRequest "http://localhost:8080/graphql"
+        |> Graphql.Http.queryRequest "/graphql"
         |> Graphql.Http.send (Result.map (List.map toGameId) >> Result.mapError (always ()) >> toMsg)
 
 
 gameStatus : GameId -> (Result () GameStatus -> msg) -> Cmd msg
 gameStatus gameId toMsg =
     Api.Query.gameStatus { gameId = Api.Scalar.Id gameId } gameSelection
-        |> Graphql.Http.queryRequest "http://localhost:8080/graphql"
+        |> Graphql.Http.queryRequest "/graphql"
         |> Graphql.Http.send (Result.mapError (always ()) >> Result.map mapApiGameStatus >> toMsg)
 
 
@@ -228,7 +228,7 @@ gameStatus gameId toMsg =
 startAGame : (Result () GameId -> msg) -> Cmd msg
 startAGame toMsg =
     Graphql.Http.mutationRequest
-        "http://localhost:8080/graphql"
+        "/graphql"
         Api.Mutation.startAGame
         |> Graphql.Http.send (Result.map toGameId >> Result.mapError (always ()) >> toMsg)
 

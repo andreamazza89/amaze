@@ -14,5 +14,9 @@ dist
 .cache
 index.html
 vendor
+public/*.js
+public/*.css
+public/*.map
+.DS_Store
 
 frontend/src/elm/Api/*

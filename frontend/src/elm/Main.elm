@@ -155,7 +155,7 @@ view_ : Model -> Element.Element Msg
 view_ model =
     case model of
         SelectingAGame gamesAvailable ->
-            Element.row [ width fill, height fill, Background.image "http://localhost:8080/maze_background.png" ]
+            Element.row [ width fill, height fill, Background.image "/maze_background.png" ]
                 [ Element.el
                     [ width <| fillPortion 1
                     , height fill

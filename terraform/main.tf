@@ -38,8 +38,8 @@ resource "aws_security_group" "maze-group" {
 
   ingress {
     protocol  = "tcp"
-    from_port = 8080
-    to_port   = 8080
+    from_port = 80
+    to_port   = 80
     cidr_blocks = [
       "0.0.0.0/0"
     ]
@@ -84,4 +84,13 @@ data "aws_iam_policy_document" "amaze_assume_role" {
 resource "aws_iam_role_policy_attachment" "can_pull_from_ecr" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"
   role       = aws_iam_role.amaze.id
+}
+
+
+resource "aws_route53_record" "maze" {
+  zone_id = "Z0805165AQE5BVWDG5L3"
+  name    = "maze.andreamazzarella.com"
+  type    = "A"
+  ttl     = "60"
+  records = [aws_instance.maze-backend.public_ip]
 }

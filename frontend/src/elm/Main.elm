@@ -277,6 +277,7 @@ viewPlayerInMaze player =
         , Border.width 1
         , Border.color Colours.lightGrey
         , Background.color <| toColour <| MazeApi.colour player
+        , Element.htmlAttribute (Html.Attributes.style "animation" "jelly 1000ms linear both")
         ]
         Element.none
 

@@ -17,7 +17,7 @@ class Configuration() {
             .add(StepResultResponse.TokenIsNotValid::class)
             .add(StepResultResponse.NewPosition::class)
             .add(AddAPlayerResponse.Success::class)
-            .add(AddAPlayerResponse.Failure::class)
+            .add(AddAPlayerResponse.FailedToAdd::class)
             .add(PlayerStatusResponse.StillIn::class)
             .add(PlayerStatusResponse.GotOut::class)
             .add(PlayerStatusResponse.Failure::class)

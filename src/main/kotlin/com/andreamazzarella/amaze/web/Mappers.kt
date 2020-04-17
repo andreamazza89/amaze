@@ -41,7 +41,7 @@ object Mappers {
     fun toAddAPlayerResponse(result: Result<String, AddAPlayerError>, playerToken: UUID): AddAPlayerResponse =
         when (result) {
             is Ok -> AddAPlayerResponse.Success(playerToken)
-            is Err -> AddAPlayerResponse.Failure("could not add player")
+            is Err -> AddAPlayerResponse.FailedToAdd("could not add player")
         }
 
     fun toTakeAStepResponse(stepResult: Result<Position, TakeAStepError>): StepResultResponse =

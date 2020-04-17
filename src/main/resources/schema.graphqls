@@ -26,13 +26,13 @@ type Subscription {
     gameStatus(gameId: ID!): GameStatus!
 }
 
-union AddAPlayerResponse = Success | Failure
+union AddAPlayerResponse = Success | FailedToAdd
 
 type Success {
     token: ID!
 }
 
-type Failure {
+type FailedToAdd {
     message: String
 }
 
@@ -44,6 +44,10 @@ type GotOut {
 
 type StillIn {
     directionsAvailable: [Direction!]!
+}
+
+type Failure {
+    message: String
 }
 
 type GameInfo {

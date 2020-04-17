@@ -20,7 +20,7 @@ data "template_file" "user_data" {
 
 resource "aws_instance" "maze-backend" {
   ami                         = "ami-06ce3edf0cff21f07"
-  instance_type               = "t2.large"
+  instance_type               = "t2.micro"
   iam_instance_profile        = aws_iam_instance_profile.amaze_backend_profile.name
   associate_public_ip_address = true
   vpc_security_group_ids      = [

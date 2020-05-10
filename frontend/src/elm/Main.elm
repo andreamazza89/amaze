@@ -1,7 +1,7 @@
 port module Main exposing (main)
 
 import Browser
-import Element exposing (alignRight, centerX, centerY, fill, fillPortion, height, padding, paddingXY, px, width)
+import Element exposing (alignRight, centerX, centerY, fill, fillPortion, height, padding, paddingXY, px, spacing, width)
 import Element.Background as Background
 import Element.Border as Border
 import Element.Button as Element
@@ -194,10 +194,19 @@ viewGameInfo gameId gameStatus_ =
         [ Border.widthEach { right = 1, top = 0, left = 0, bottom = 0 }
         , Border.color Colours.black
         , height fill
+        , paddingXY 5 10
+        , spacing Scale.small
         ]
-        [ Element.el [ padding Scale.small ] (Element.text <| "GAME ID: " ++ MazeApi.toString gameId)
+        [ linkToApiExplorer
+        , Element.el [ centerX ] (Element.text <| "GAME ID: " ++ MazeApi.toString gameId)
+        , Element.el [ centerX, Font.size 17 ] (Element.text <| "(Add yourself via the explorer)")
         , viewPlayerNames gameStatus_
         ]
+
+
+linkToApiExplorer : Element.Element msg
+linkToApiExplorer =
+    Element.myLink [ centerX ] "/graphiql" "API EXPLORER"
 
 
 viewGamesAvailable : MazeApi.Webdata (List MazeApi.GameId) -> Element.Element Msg
